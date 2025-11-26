@@ -1,0 +1,99 @@
+from browser import document as doc
+from browser import html
+import math
+
+# --- 建立畫布 600x400 ---
+canvas = html.CANVAS(width = 600, height = 400)
+canvas.id = "tw_flag_rot"
+doc["brython_div1"] <= canvas
+
+ctx = canvas.getContext("2d")
+
+# --- 旗子大小 200×133.3 ---
+FLAG_W = 200
+FLAG_H = FLAG_W * 2 / 3
+circle_x = FLAG_W / 4
+circle_y = FLAG_H / 4
+
+def draw_flag(ctx):
+    # 紅底
+    ctx.fillStyle='rgb(255,0,0)'
+    ctx.fillRect(0,0,FLAG_W,FLAG_H)
+    
+    # 青天
+    ctx.fillStyle='rgb(0,0,150)'
+    ctx.fillRect(0,0,FLAG_W/2,FLAG_H/2)
+    
+    # 十二芒白日
+    ctx.beginPath()
+    star_radius = FLAG_W/8
+    angle = 0
+    for i in range(24):
+        angle += 5*math.pi*2/12
+        toX = circle_x + math.cos(angle)*star_radius
+        toY = circle_y + math.sin(angle)*star_radius
+        ctx.lineTo(toX,toY) if i else ctx.moveTo(toX,toY)
+    ctx.closePath()
+    ctx.fillStyle='#fff'
+    ctx.fill()
+    
+    # 白日藍圈
+    ctx.beginPath()
+    ctx.arc(circle_x, circle_y, FLAG_W*17/240, 0, math.pi*2)
+    ctx.closePath()
+    ctx.fillStyle='rgb(0,0,149)'
+    ctx.fill()
+    
+    # 白日白心
+    ctx.beginPath()
+    ctx.arc(circle_x, circle_y, FLAG_W/16, 0, math.pi*2)
+    ctx.closePath()
+    ctx.fillStyle='#fff'
+    ctx.fill()
+
+
+# ---------------------------------------------------------
+# (A) 左側：旋轉 90°
+# ---------------------------------------------------------
+ctx.save()
+
+# 文字排版
+ctx.font = "24px Arial"
+ctx.fillStyle = "black"
+lines = ["中華民國國旗", "旋轉 90 度（順時針）"]
+x_text = 40
+y_text = 40
+line_height = 28
+for i, line in enumerate(lines):
+    ctx.fillText(line, x_text, y_text + i*line_height)
+
+# 畫旗子（左側）
+ctx.translate(180, 260)
+ctx.rotate(-math.pi/2)
+ctx.translate(-FLAG_W/2, -FLAG_H/2)
+draw_flag(ctx)
+
+ctx.restore()
+
+
+# ---------------------------------------------------------
+# (B) 右側：旋轉 45°
+# ---------------------------------------------------------
+ctx.save()
+
+# 文字排版
+ctx.font = "24px Arial"
+ctx.fillStyle = "black"
+lines = ["中華民國國旗", "旋轉 45 度（順時針）"]
+x_text = 360
+y_text = 40
+for i, line in enumerate(lines):
+    ctx.fillText(line, x_text, y_text + i*line_height)
+
+# 畫旗子（右側）
+ctx.translate(450, 260)
+ctx.rotate(-math.pi/4)
+ctx.translate(-FLAG_W/2, -FLAG_H/2)
+draw_flag(ctx)
+
+ctx.restore()
