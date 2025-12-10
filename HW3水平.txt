@@ -1,0 +1,77 @@
+from brython_robot4 import init, load_scene_from_url, get_url_parameter
+from browser import aio
+
+# 機器人行為腳本
+async def robot_actions(robot):
+    print("開始執行機器人程式：水平一層層往上採收胡蘿蔔。")
+
+    # 在 robot_actions 內定義輔助函式，才能使用 robot
+    async def turn_left_n(n):
+        for _ in range(n):
+            await robot.turn_left()
+
+    async def turn_right_n(n):
+        for _ in range(n):
+            await robot.turn_right()
+
+    async def move_n(n):
+        for _ in range(n):
+            await robot.move()
+
+    collected = 0
+    carrots_needed = 36
+
+    # 從起始位置 (1,1) 移動到田地左下角 (3,3)，並面向東開始
+    await move_n(2)          # 向東到 (3,1)
+    await robot.turn_left()  # 轉向北
+    await move_n(2)          # 向北到 (3,3)
+    await robot.turn_right() # 從北轉向東，準備第一行收割
+
+    row = 0  # 已完成的行數 (0~5，共6行)
+
+    while collected < carrots_needed and row < 6:
+        # 收割當前這一行（走6格）
+        for i in range(6):
+            # 採收當前格的所有胡蘿蔔
+            while robot.background_is("pale_grass"):
+                robot.pick_carrot()
+                collected += 1
+                if collected >= carrots_needed:
+                    break
+            if collected >= carrots_needed:
+                break
+            # 最後一格不用再往前走
+            if i < 5:
+                await robot.move()
+
+        row += 1
+        if row >= 6 or collected >= carrots_needed:
+            break
+
+        # 準備下一行：根據目前方向決定怎麼轉向上移
+        if row % 2 == 1:  # 奇數行結束（第1、3、5行），目前面向東
+            await robot.turn_left()  # 東 → 北
+            await robot.move()       # 上移一格
+            await robot.turn_left()  # 北 → 西
+        else:  # 偶數行結束（第2、4行），目前面向西
+            await robot.turn_right() # 西 → 北
+            await robot.move()       # 上移一格
+            await robot.turn_right() # 北 → 東
+
+    print("所有胡蘿蔔已採收完畢！")
+    print(f"程式執行完畢。總共採收了 {collected} 個胡蘿蔔。")
+
+# 程式啟動點
+async def main():
+    world_url = get_url_parameter('world')
+    if world_url:
+        scene_data = await load_scene_from_url(world_url)
+        world, robot = init(scene_data, robot_config={"max_carrots": 50})
+    else:
+        world, robot = init(robot_config={"max_carrots": 50})
+
+    if robot:
+        await robot_actions(robot)
+
+# 啟動主程式
+aio.run(main())

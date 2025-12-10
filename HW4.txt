@@ -1,0 +1,84 @@
+from brython_robot4 import init, load_scene_from_url, get_url_parameter
+from browser import aio
+
+
+# 機器人行為腳本（完全模仿 NormalizeCarrot 的蛇行邏輯）
+async def robot_actions(robot):
+    print("開始執行機器人程式：蛇行採收 (3,3) ~ (8,8) 所有胡蘿蔔")
+
+    # ---------- 輔助函式 ----------
+    async def move_n(n):
+        for _ in range(n):
+            await robot.move()
+
+    async def turn_left_n(n):
+        for _ in range(n):
+            await robot.turn_left()
+
+    async def pick_all_carrots_in_cell():
+        """把目前格子裡的所有胡蘿蔔全部採收"""
+        while robot.background_is("pale_grass"):   # pale_grass 表示有胡蘿蔔可採
+            robot.pick_carrot()
+
+    async def harvest_one_row(cols, direction_right):
+        """採收一整列（cols 格），direction_right=True 代表從左到右"""
+        for i in range(cols):
+            await pick_all_carrots_in_cell()
+            if i < cols - 1:               # 不是該列最後一格才往前走
+                await robot.move()
+
+    async def move_to_field_start():
+        """從 (1,1) 走到田地左下角 (3,3)，最後面向右（東）"""
+        await move_n(2)                 # (1,1) → (3,1)
+        await robot.turn_left()         # 東 → 北
+        await move_n(2)                 # (3,1) → (3,3)
+        await turn_left_n(3)            # 北左轉三次 → 東（準備從左往右走第一列）
+
+    # ---------- 主程式 ----------
+    # 田地範圍固定為 (3,3) ~ (8,8)
+    x_min, y_min = 3, 3
+    x_max, y_max = 8, 8
+    cols = x_max - x_min + 1          # 6 格寬
+    rows = y_max - y_min + 1          # 6 格高
+
+    await move_to_field_start()        # 先走到左下角 (3,3) 並面向右
+
+    for r in range(rows):
+        # 判斷這一列要從左到右還是從右到左
+        if r % 2 == 0:
+            # 偶數列（0,2,4）：從左到右
+            await harvest_one_row(cols, direction_right=True)
+        else:
+            # 奇數列（1,3,5）：從右到左
+            await harvest_one_row(cols, direction_right=False)
+
+        if r < rows - 1:               # 還不是最後一列 → 換到下一列
+            if r % 2 == 0:
+                # 剛走完從左到右的列（在最右邊），下一步要往下走再左轉
+                await robot.turn_left()        # 東 → 北（其實是往上，但地圖 Y 越大越上面）
+                await robot.move()             # 往上走到下一列
+                await robot.turn_left()        # 北 → 西，準備從右往左走
+            else:
+                # 剛走完從右到左的列（在最左邊），下一步要往下走再右轉
+                await turn_left_n(3)           # 西左轉三次 → 東
+                await robot.move()             # 往上走到下一列
+                await turn_left_n(3)           # 東左轉三次 → 南（其實是往下，但我們要往上）
+
+    print("全部胡蘿蔔已採收完畢！")
+
+
+# 程式啟動點
+async def main():
+    world_url = get_url_parameter('world')
+    if world_url:
+        scene_data = await load_scene_from_url(world_url)
+        world, robot = init(scene_data, robot_config={"max_carrots": 50})
+    else:
+        world, robot = init(robot_config={"max_carrots": 50})
+
+    if robot:
+        await robot_actions(robot)
+
+
+# 啟動主程式
+aio.run(main())
