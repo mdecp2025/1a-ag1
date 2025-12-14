@@ -192,6 +192,25 @@
             margin-top: 15px;
         }
         
+        .copy-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: 600;
+        }
+        
+        .copy-message.show {
+            opacity: 1;
+        }
+        
         @media (max-width: 768px) {
             .main-content {
                 flex-direction: column;
@@ -215,7 +234,7 @@
     <div class="container">
         <header>
             <h1>7x7 lab</h1>
-            <p class="subtitle">像素文字 G-code 生成器</p>
+            <p class="subtitle">像素文字 G-code 生成器 - 可直接3D列印版本</p>
         </header>
         
         <div class="main-content">
@@ -263,6 +282,17 @@
                     <button id="copyBtn" class="button-primary">複製 G-code</button>
                     <button id="downloadBtn" class="button-primary">下載 G-code</button>
                 </div>
+                
+                <div class="input-group">
+                    <label>G-code 參數 (固定值):</label>
+                    <div style="background-color: #2d2d2d; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                        <div style="margin-bottom: 5px;">噴嘴直徑: 0.4mm</div>
+                        <div style="margin-bottom: 5px;">線材直徑: 1.75mm</div>
+                        <div style="margin-bottom: 5px;">層高: 0.2mm</div>
+                        <div style="margin-bottom: 5px;">第一層高度: 0.3mm</div>
+                        <div>回抽距離: 1.0mm</div>
+                    </div>
+                </div>
             </div>
             
             <div class="preview-container">
@@ -279,8 +309,11 @@
         </div>
     </div>
 
+    <!-- 複製成功提示訊息 -->
+    <div id="copyMessage" class="copy-message">G-code 已複製到剪貼簿！</div>
+
     <script>
-        // 字元定義 (7x7 像素) - 只保留大寫字母、小寫字母和數字
+        // 完整的字元定義 (7x7 像素) - 大寫字母
         const charMap = {
             'A': [
                 [0,0,1,1,1,0,0],
@@ -606,240 +639,6 @@
                 [1,0,0,0,0,0,1],
                 [0,1,1,1,1,1,0]
             ],
-            'a': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,1,1,1,1,0,0],
-                [0,0,0,0,0,1,0],
-                [0,1,1,1,1,1,0],
-                [1,0,0,0,0,1,0],
-                [0,1,1,1,1,1,0]
-            ],
-            'b': [
-                [1,0,0,0,0,0,0],
-                [1,0,0,0,0,0,0],
-                [1,0,1,1,1,0,0],
-                [1,1,0,0,0,1,0],
-                [1,0,0,0,0,1,0],
-                [1,1,0,0,0,1,0],
-                [1,0,1,1,1,0,0]
-            ],
-            'c': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,1,1,1,1,0,0],
-                [1,0,0,0,0,1,0],
-                [1,0,0,0,0,0,0],
-                [1,0,0,0,0,1,0],
-                [0,1,1,1,1,0,0]
-            ],
-            'd': [
-                [0,0,0,0,0,0,1],
-                [0,0,0,0,0,0,1],
-                [0,1,1,1,0,0,1],
-                [1,0,0,0,1,0,1],
-                [1,0,0,0,0,0,1],
-                [1,0,0,0,1,0,1],
-                [0,1,1,1,0,0,1]
-            ],
-            'e': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,1,1,1,1,0,0],
-                [1,0,0,0,0,1,0],
-                [1,1,1,1,1,1,0],
-                [1,0,0,0,0,0,0],
-                [0,1,1,1,1,0,0]
-            ],
-            'f': [
-                [0,0,1,1,1,0,0],
-                [0,1,0,0,0,1,0],
-                [0,1,0,0,0,0,0],
-                [1,1,1,1,0,0,0],
-                [0,1,0,0,0,0,0],
-                [0,1,0,0,0,0,0],
-                [0,1,0,0,0,0,0]
-            ],
-            'g': [
-                [0,0,0,0,0,0,0],
-                [0,1,1,1,1,0,0],
-                [1,0,0,0,0,1,0],
-                [1,0,0,0,0,1,0],
-                [0,1,1,1,1,1,0],
-                [0,0,0,0,0,1,0],
-                [0,1,1,1,1,0,0]
-            ],
-            'h': [
-                [1,0,0,0,0,0,0],
-                [1,0,0,0,0,0,0],
-                [1,0,1,1,1,0,0],
-                [1,1,0,0,0,1,0],
-                [1,0,0,0,0,1,0],
-                [1,0,0,0,0,1,0],
-                [1,0,0,0,0,1,0]
-            ],
-            'i': [
-                [0,0,1,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,1,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,1,1,1,0,0,0]
-            ],
-            'j': [
-                [0,0,0,0,1,0,0],
-                [0,0,0,0,0,0,0],
-                [0,0,0,1,1,0,0],
-                [0,0,0,0,1,0,0],
-                [0,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [0,1,1,1,0,0,0]
-            ],
-            'k': [
-                [1,0,0,0,0,0,0],
-                [1,0,0,0,0,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,1,0,0,0],
-                [1,1,1,0,0,0,0],
-                [1,0,0,1,0,0,0],
-                [1,0,0,0,1,0,0]
-            ],
-            'l': [
-                [0,1,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,1,1,1,0,0,0]
-            ],
-            'm': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,1,0,1,0,0,0],
-                [1,0,1,0,1,0,0],
-                [1,0,1,0,1,0,0],
-                [1,0,1,0,1,0,0],
-                [1,0,1,0,1,0,0]
-            ],
-            'n': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,0,1,1,0,0,0],
-                [1,1,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0]
-            ],
-            'o': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,1,1,1,0,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [0,1,1,1,0,0,0]
-            ],
-            'p': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,1,1,1,0,0,0],
-                [1,0,0,0,1,0,0],
-                [1,1,1,1,0,0,0],
-                [1,0,0,0,0,0,0],
-                [1,0,0,0,0,0,0]
-            ],
-            'q': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,1,1,1,0,0,0],
-                [1,0,0,0,1,0,0],
-                [0,1,1,1,1,0,0],
-                [0,0,0,0,1,0,0],
-                [0,0,0,0,1,0,0]
-            ],
-            'r': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,0,1,1,0,0,0],
-                [1,1,0,0,1,0,0],
-                [1,0,0,0,0,0,0],
-                [1,0,0,0,0,0,0],
-                [1,0,0,0,0,0,0]
-            ],
-            's': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,1,1,1,1,0,0],
-                [1,0,0,0,0,0,0],
-                [0,1,1,1,0,0,0],
-                [0,0,0,0,1,0,0],
-                [1,1,1,1,0,0,0]
-            ],
-            't': [
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,1,1,1,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,0,1,0,1,0,0],
-                [0,0,0,1,0,0,0]
-            ],
-            'u': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,1,1,0,0],
-                [0,1,1,0,1,0,0]
-            ],
-            'v': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [0,1,0,1,0,0,0],
-                [0,0,1,0,0,0,0]
-            ],
-            'w': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,1,0,1,0,0],
-                [1,0,1,0,1,0,0],
-                [0,1,0,1,0,0,0]
-            ],
-            'x': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,0,0,0,1,0,0],
-                [0,1,0,1,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,1,0,1,0,0,0],
-                [1,0,0,0,1,0,0]
-            ],
-            'y': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,0,0,0,1,0,0],
-                [1,0,0,0,1,0,0],
-                [0,1,1,1,1,0,0],
-                [0,0,0,0,1,0,0],
-                [0,1,1,1,0,0,0]
-            ],
-            'z': [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [1,1,1,1,1,0,0],
-                [0,0,0,1,0,0,0],
-                [0,0,1,0,0,0,0],
-                [0,1,0,0,0,0,0],
-                [1,1,1,1,1,0,0]
-            ],
             ' ': [
                 [0,0,0,0,0,0,0],
                 [0,0,0,0,0,0,0],
@@ -863,29 +662,18 @@
                 return;
             }
             
-            // 清空預覽容器
             previewContainer.innerHTML = '';
             
-            // 計算預覽區域可用寬度（減去邊框和內邊距）
-            const previewWidth = previewArea.clientWidth - 40; // 減去內邊距
+            const previewWidth = previewArea.clientWidth - 40;
             const charCount = text.length;
-            const charSpacing = 10; // 字元間距
-            const maxPixelSize = 30; // 最大方塊尺寸
-            const minPixelSize = 8; // 最小方塊尺寸
+            const charSpacing = 10;
+            const maxPixelSize = 30;
+            const minPixelSize = 8;
             
-            // 計算需要的總寬度（每個字元7個方塊 + 間距 + 邊框）
             const requiredSpacing = (charCount - 1) * charSpacing;
-            
-            // 計算最適合的方塊大小，預留5px邊距
             let pixelSize = Math.floor((previewWidth - requiredSpacing - 10) / (charCount * 7));
-            
-            // 限制方塊大小在合理範圍內
             pixelSize = Math.max(minPixelSize, Math.min(maxPixelSize, pixelSize));
             
-            // 計算總寬度（包括間距）
-            const totalWidth = (charCount * 7 * pixelSize) + requiredSpacing;
-            
-            // 為每個字元創建預覽
             for (let charIndex = 0; charIndex < text.length; charIndex++) {
                 const char = text[charIndex];
                 
@@ -893,7 +681,6 @@
                 charContainer.className = 'char-preview';
                 charContainer.style.marginRight = charIndex < text.length - 1 ? `${charSpacing}px` : '0';
                 
-                // 創建 7x7 像素網格
                 const pixelGrid = document.createElement('div');
                 pixelGrid.className = 'pixel-grid';
                 pixelGrid.style.gridTemplateColumns = `repeat(7, ${pixelSize}px)`;
@@ -928,7 +715,6 @@
                 
                 charContainer.appendChild(pixelGrid);
                 
-                // 顯示字元標籤
                 const charLabel = document.createElement('p');
                 charLabel.textContent = `"${char}"`;
                 charContainer.appendChild(charLabel);
@@ -936,122 +722,238 @@
                 previewContainer.appendChild(charContainer);
             }
             
-            // 設置容器寬度，留出邊距
+            const totalWidth = (charCount * 7 * pixelSize) + requiredSpacing;
             previewContainer.style.width = `${Math.min(totalWidth, previewWidth - 10)}px`;
         }
 
-        // 生成 G-code
+        // 生成可直接使用的G-code
         function generateGcode() {
             const text = document.getElementById('textInput').value.toUpperCase();
             const pixelSize = parseFloat(document.getElementById('pixelSize').value);
             const blockHeight = parseFloat(document.getElementById('blockHeight').value);
             const printStyle = document.getElementById('printStyle').value;
             
-            // 固定參數
-            const printSpeed = 60;
-            const nozzleTemp = 220;
-            const bedTemp = 80;
-            const layerHeight = 0.2;
-            const layers = Math.round(blockHeight / layerHeight);
+            // 固定參數設定（適合多數3D印表機）
+            const NOZZLE_DIAMETER = 0.4;        // 噴嘴直徑 mm
+            const FILAMENT_DIAMETER = 1.75;     // 線材直徑 mm
+            const LAYER_HEIGHT = 0.2;           // 層高 mm
+            const FIRST_LAYER_HEIGHT = 0.3;     // 第一層高度 mm
+            const LINE_WIDTH = 0.4;             // 線寬 mm
+            const PRINT_SPEED = 60;             // 列印速度 mm/s
+            const TRAVEL_SPEED = 120;           // 移動速度 mm/s
+            const FIRST_LAYER_SPEED = 30;       // 第一層速度 mm/s
+            const NOZZLE_TEMP = 210;            // 噴頭溫度 °C (PLA)
+            const BED_TEMP = 60;                // 熱床溫度 °C (PLA)
+            const RETRACT_DISTANCE = 1.0;       // 回抽距離 mm
+            const RETRACT_SPEED = 45;           // 回抽速度 mm/s
             
-            let gcode = `; 像素風格3D列印G-code\n`;
-            gcode += `; 文字: ${text}\n`;
-            gcode += `; 像素尺寸: ${pixelSize}mm\n`;
-            gcode += `; 厚度: ${blockHeight}mm\n`;
-            gcode += `; 列印樣式: ${printStyle === 'solid' ? '實心' : '空心'}\n`;
-            gcode += `; 列印速度: ${printSpeed}mm/s\n`;
-            gcode += `; 噴頭溫度: ${nozzleTemp}°C\n`;
-            gcode += `; 熱床溫度: ${bedTemp}°C\n`;
-            gcode += `; 層高: ${layerHeight}mm\n\n`;
+            // 計算層數
+            const totalLayers = Math.ceil(blockHeight / LAYER_HEIGHT);
+            const firstLayer = FIRST_LAYER_HEIGHT > 0 ? 1 : 0;
+            const normalLayers = totalLayers - firstLayer;
             
-            // G-code 初始化設定
-            gcode += `; 初始化設定\n`;
-            gcode += `G21 ; 毫米單位\n`;
-            gcode += `G90 ; 絕對座標\n`;
-            gcode += `M82 ; 絕對擠出\n\n`;
+            // 計算擠出量函數
+            const calculateExtrusion = (length, layerHeight, lineWidth = LINE_WIDTH) => {
+                const crossSection = layerHeight * lineWidth;
+                const volume = crossSection * length;
+                const filamentCrossSection = Math.PI * Math.pow(FILAMENT_DIAMETER / 2, 2);
+                return volume / filamentCrossSection;
+            };
             
-            // 加熱設定
-            gcode += `; 加熱設定\n`;
-            gcode += `M104 S${nozzleTemp} ; 設定噴頭溫度\n`;
-            gcode += `M140 S${bedTemp} ; 設定熱床溫度\n\n`;
+            // 生成G-code頭部
+            let gcode = `; 7x7像素文字 - 可直接列印版本
+; 文字: ${text}
+; 像素尺寸: ${pixelSize}mm
+; 厚度: ${blockHeight}mm (${totalLayers}層)
+; 列印樣式: ${printStyle === 'solid' ? '實心' : '空心'}
+; 噴嘴直徑: ${NOZZLE_DIAMETER}mm
+; 線材直徑: ${FILAMENT_DIAMETER}mm
+; 層高: ${LAYER_HEIGHT}mm
+; 第一層高度: ${FIRST_LAYER_HEIGHT}mm
+; 生成時間: ${new Date().toLocaleString()}
+
+; ============ 初始化設定 ============
+G21 ; 毫米單位
+G90 ; 絕對座標
+M82 ; 絕對擠出模式
+M140 S${BED_TEMP} ; 設定熱床溫度
+M104 S${NOZZLE_TEMP} ; 設定噴頭溫度
+M190 S${BED_TEMP} ; 等待熱床達到溫度
+M109 S${NOZZLE_TEMP} ; 等待噴頭達到溫度
+G28 ; 所有軸歸零
+G92 E0 ; 重置擠出機
+M83 ; 相對擠出模式（方便計算）
+
+; ============ 清潔噴嘴 ============
+G1 Z10 F${TRAVEL_SPEED * 60}
+G1 X5 Y5 F${TRAVEL_SPEED * 60}
+G1 Z0.2 F${TRAVEL_SPEED * 60}
+G1 E3 F60 ; 擠出3mm清理噴嘴
+G92 E0 ; 重置擠出機
+G1 Z10 F${TRAVEL_SPEED * 60}
+
+; ============ 開始列印 ============
+
+`;
             
-            // 等待加熱
-            gcode += `; 等待加熱\n`;
-            gcode += `M190 S${bedTemp} ; 等待熱床達到溫度\n`;
-            gcode += `M109 S${nozzleTemp} ; 等待噴頭達到溫度\n\n`;
-            
-            // 初始移動
-            gcode += `; 初始移動\n`;
-            gcode += `G28 ; 所有軸歸零\n`;
-            gcode += `G1 Z5 F3000 ; 抬升噴頭\n\n`;
-            
-            // 開始列印像素方塊
-            gcode += `; 開始列印像素方塊\n`;
-            gcode += `; 總層數: ${layers}\n\n`;
-            
-            // 生成每個字元的像素位置
-            let xOffset = 10;
+            // 計算所有像素的位置
+            let pixelPositions = [];
+            let xOffset = 20; // 起始X位置
+            let yOffset = 20; // 起始Y位置
             
             for (let charIndex = 0; charIndex < text.length; charIndex++) {
                 const char = text[charIndex];
-                
                 if (charMap[char]) {
-                    // 計算字元位置
                     const charX = xOffset;
                     
-                    // 生成每個像素方塊
                     for (let row = 0; row < 7; row++) {
                         for (let col = 0; col < 7; col++) {
                             if (charMap[char][row][col] === 1) {
                                 const x = charX + col * pixelSize;
-                                const y = 10 + (6 - row) * pixelSize; // 修正Y軸方向
-                                
-                                // 為每個方塊生成所有層
-                                for (let layer = 1; layer <= layers; layer++) {
-                                    const z = layer * layerHeight;
-                                    
-                                    gcode += `; 第 ${layer} 層, Z=${z.toFixed(2)}mm\n`;
-                                    gcode += `G1 Z${z.toFixed(2)} F3000\n`;
-                                    gcode += `G1 X${x.toFixed(2)} Y${y.toFixed(2)} F3000\n`;
-                                    gcode += `G1 E0.4 F300 ; 開始擠出\n`;
-                                    
-                                    if (printStyle === 'solid') {
-                                        // 實心方塊 - 填充內部
-                                        gcode += `; 實心方塊填充\n`;
-                                        for (let fillRow = 0; fillRow <= pixelSize; fillRow += pixelSize/4) {
-                                            const fillY = y + fillRow;
-                                            gcode += `G1 X${x.toFixed(2)} Y${fillY.toFixed(2)} E0.2 F${printSpeed}\n`;
-                                            gcode += `G1 X${(x + pixelSize).toFixed(2)} Y${fillY.toFixed(2)} E0.2\n`;
-                                        }
-                                    } else {
-                                        // 空心方塊 - 只繪製輪廓
-                                        gcode += `; 空心方塊輪廓\n`;
-                                        gcode += `G1 X${(x + pixelSize).toFixed(2)} Y${y.toFixed(2)} E0.8 F${printSpeed}\n`;
-                                        gcode += `G1 X${(x + pixelSize).toFixed(2)} Y${(y + pixelSize).toFixed(2)} E0.8\n`;
-                                        gcode += `G1 X${x.toFixed(2)} Y${(y + pixelSize).toFixed(2)} E0.8\n`;
-                                        gcode += `G1 X${x.toFixed(2)} Y${y.toFixed(2)} E0.8\n`;
-                                    }
-                                    
-                                    gcode += `G1 E-0.4 F1800 ; 回抽\n\n`;
-                                }
+                                const y = yOffset + (6 - row) * pixelSize;
+                                pixelPositions.push({ x, y });
                             }
                         }
                     }
-                    
                     xOffset += 8 * pixelSize; // 字元間距
                 }
             }
             
+            // 列印第一層
+            if (firstLayer > 0) {
+                gcode += `; ============ 第一層 ============\n`;
+                gcode += `G1 Z${FIRST_LAYER_HEIGHT.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
+                
+                for (let i = 0; i < pixelPositions.length; i++) {
+                    const pos = pixelPositions[i];
+                    
+                    // 移動到像素位置
+                    gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
+                    
+                    // 擠出第一層
+                    if (printStyle === 'solid') {
+                        // 實心方塊 - 畫輪廓和填充
+                        const perimeterLength = pixelSize * 4;
+                        const perimeterExtrusion = calculateExtrusion(perimeterLength, FIRST_LAYER_HEIGHT);
+                        
+                        gcode += `G1 E${perimeterExtrusion.toFixed(4)} F${RETRACT_SPEED * 60}\n`;
+                        
+                        // 畫外輪廓
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)} F${FIRST_LAYER_SPEED * 60}\n`;
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        
+                        // 實心填充 - 畫橫線
+                        const fillSpacing = 0.4; // 填充線間距
+                        const fillLines = Math.floor(pixelSize / fillSpacing);
+                        
+                        for (let line = 1; line < fillLines; line++) {
+                            const fillY = pos.y + line * fillSpacing;
+                            const fillLength = pixelSize;
+                            const fillExtrusion = calculateExtrusion(fillLength, FIRST_LAYER_HEIGHT);
+                            
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${fillY.toFixed(2)} E0\n`;
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${fillY.toFixed(2)} E${fillExtrusion.toFixed(4)}\n`;
+                        }
+                    } else {
+                        // 空心方塊 - 只畫輪廓
+                        const perimeterLength = pixelSize * 4;
+                        const extrusionAmount = calculateExtrusion(perimeterLength, FIRST_LAYER_HEIGHT);
+                        
+                        gcode += `G1 E${extrusionAmount.toFixed(4)} F${RETRACT_SPEED * 60}\n`;
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${extrusionAmount.toFixed(4)} F${FIRST_LAYER_SPEED * 60}\n`;
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                    }
+                    
+                    // 回抽
+                    gcode += `G1 E-${RETRACT_DISTANCE} F${RETRACT_SPEED * 60}\n`;
+                    gcode += `G1 Z${(FIRST_LAYER_HEIGHT + 0.5).toFixed(2)} F${TRAVEL_SPEED * 60}\n\n`;
+                }
+            }
+            
+            // 列印其餘層
+            if (normalLayers > 0) {
+                gcode += `; ============ 其他層 (${normalLayers}層) ============\n`;
+                
+                for (let layer = 1; layer <= normalLayers; layer++) {
+                    const currentZ = FIRST_LAYER_HEIGHT + (layer * LAYER_HEIGHT);
+                    gcode += `; 第 ${layer + firstLayer} 層, Z=${currentZ.toFixed(2)}mm\n`;
+                    
+                    for (let i = 0; i < pixelPositions.length; i++) {
+                        const pos = pixelPositions[i];
+                        
+                        // 移動到像素位置
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} Z${(currentZ + 0.5).toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
+                        gcode += `G1 Z${currentZ.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
+                        
+                        if (printStyle === 'solid') {
+                            // 實心方塊 - 畫輪廓和填充
+                            const perimeterLength = pixelSize * 4;
+                            const perimeterExtrusion = calculateExtrusion(perimeterLength, LAYER_HEIGHT);
+                            
+                            gcode += `G1 E${RETRACT_DISTANCE} F${RETRACT_SPEED * 60}\n`;
+                            
+                            // 畫外輪廓
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)} F${PRINT_SPEED * 60}\n`;
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                            
+                            // 實心填充 - 畫橫線
+                            const fillSpacing = 0.4; // 填充線間距
+                            const fillLines = Math.floor(pixelSize / fillSpacing);
+                            
+                            for (let line = 1; line < fillLines; line++) {
+                                const fillY = pos.y + line * fillSpacing;
+                                const fillLength = pixelSize;
+                                const fillExtrusion = calculateExtrusion(fillLength, LAYER_HEIGHT);
+                                
+                                gcode += `G1 X${pos.x.toFixed(2)} Y${fillY.toFixed(2)} E0\n`;
+                                gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${fillY.toFixed(2)} E${fillExtrusion.toFixed(4)}\n`;
+                            }
+                        } else {
+                            // 空心方塊 - 只畫輪廓
+                            const perimeterLength = pixelSize * 4;
+                            const extrusionAmount = calculateExtrusion(perimeterLength, LAYER_HEIGHT);
+                            
+                            gcode += `G1 E${RETRACT_DISTANCE} F${RETRACT_SPEED * 60}\n`;
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${extrusionAmount.toFixed(4)} F${PRINT_SPEED * 60}\n`;
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                        }
+                        
+                        // 回抽
+                        gcode += `G1 E-${RETRACT_DISTANCE} F${RETRACT_SPEED * 60}\n`;
+                        gcode += `G1 Z${(currentZ + 0.5).toFixed(2)} F${TRAVEL_SPEED * 60}\n\n`;
+                    }
+                }
+            }
+            
             // 列印完成
-            gcode += `; 列印完成\n`;
-            gcode += `G1 Z10 F3000 ; 抬升噴頭\n`;
-            gcode += `M104 S0 ; 關閉噴頭加熱\n`;
-            gcode += `M140 S0 ; 關閉熱床加熱\n`;
-            gcode += `G28 X Y ; X/Y軸歸零\n`;
-            gcode += `M84 ; 關閉步進馬達\n`;
-            gcode += `M30 ; 程式結束\n`;
+            gcode += `; ============ 列印完成 ============
+G1 Z20 F${TRAVEL_SPEED * 60} ; 抬升噴頭
+G28 X Y ; X/Y軸歸零
+M104 S0 ; 關閉噴頭加熱
+M140 S0 ; 關閉熱床加熱
+M107 ; 關閉風扇
+M84 ; 關閉步進馬達
+M30 ; 程式結束
+`;
             
             return gcode;
+        }
+
+        // 顯示複製成功訊息
+        function showCopyMessage() {
+            const message = document.getElementById('copyMessage');
+            message.classList.add('show');
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 3000);
         }
 
         // 複製 G-code 到剪貼簿
@@ -1064,12 +966,46 @@
             
             const gcode = generateGcode();
             
-            navigator.clipboard.writeText(gcode).then(() => {
-                alert('G-code 已複製到剪貼簿！');
-            }).catch(err => {
-                console.error('複製失敗: ', err);
-                alert('複製失敗，請手動複製文字');
-            });
+            // 使用Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(gcode)
+                    .then(() => {
+                        showCopyMessage();
+                    })
+                    .catch(err => {
+                        console.error('複製失敗:', err);
+                        copyFallback(gcode);
+                    });
+            } else {
+                copyFallback(gcode);
+            }
+        }
+
+        // 降級複製方法
+        function copyFallback(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-999999px';
+            textarea.style.top = '-999999px';
+            document.body.appendChild(textarea);
+            
+            textarea.focus();
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopyMessage();
+                } else {
+                    alert('無法複製到剪貼簿，請手動複製生成的G-code');
+                }
+            } catch (err) {
+                console.error('降級複製失敗:', err);
+                alert('複製失敗，請手動複製生成的文字');
+            }
+            
+            document.body.removeChild(textarea);
         }
 
         // 下載 G-code 檔案
@@ -1086,7 +1022,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `pixel_${cleanText}.gcode`;
+            a.download = `7x7_pixel_${cleanText}.gcode`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1108,8 +1044,11 @@
                 });
             });
             
-            // 文字輸入變化時更新預覽
+            // 輸入變化時更新預覽
             document.getElementById('textInput').addEventListener('input', showFontPreview);
+            document.getElementById('pixelSize').addEventListener('change', showFontPreview);
+            document.getElementById('blockHeight').addEventListener('change', showFontPreview);
+            document.getElementById('printStyle').addEventListener('change', showFontPreview);
             
             // 視窗大小變化時重新計算預覽
             window.addEventListener('resize', showFontPreview);
