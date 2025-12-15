@@ -207,8 +207,63 @@
             font-weight: 600;
         }
         
-        .copy-message.show {
+        .error-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f44336;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: 600;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .copy-message.show, .error-message.show {
             opacity: 1;
+        }
+        
+        .save-load-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .button-secondary {
+            background-color: #2196F3;
+        }
+        
+        .button-secondary:hover {
+            background-color: #0b7dda;
+        }
+        
+        .button-warning {
+            background-color: #ff9800;
+        }
+        
+        .button-warning:hover {
+            background-color: #e68900;
+        }
+        
+        .supported-chars {
+            background-color: #2d2d2d;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .supported-chars span {
+            color: #4CAF50;
+            font-weight: bold;
         }
         
         @media (max-width: 768px) {
@@ -220,7 +275,7 @@
                 min-width: 100%;
             }
             
-            .action-buttons {
+            .action-buttons, .save-load-buttons {
                 grid-template-columns: 1fr;
             }
             
@@ -242,20 +297,23 @@
                 <h2 class="section-title">控制面板</h2>
                 
                 <div class="input-group">
-                    <label for="textInput">輸入文字 (大寫字母、小寫字母和數字):</label>
-                    <input type="text" id="textInput" maxlength="15" placeholder="例如: HELLO" value="HELLO">
+                    <label for="textInput">輸入文字 (支援大小寫字母、數字、空格和一些符號):</label>
+                    <input type="text" id="textInput" maxlength="20" placeholder="例如: Hello World 123" value="HELLO">
+                    <div class="supported-chars">
+                        支援字元: <span>A-Z a-z 0-9 空格 ! ? - = + * / ( ) [ ] { } & @ # $ % ^ &lt; &gt;</span>
+                    </div>
                 </div>
                 
                 <div class="input-group">
                     <label>快速範例:</label>
                     <div class="char-buttons">
                         <button data-char="HELLO">HELLO</button>
+                        <button data-char="Hello">Hello</button>
                         <button data-char="NFU">NFU</button>
                         <button data-char="ABC">ABC</button>
                         <button data-char="123">123</button>
                         <button data-char="3D PRINT">3D PRINT</button>
-                        <button data-char="LAB">LAB</button>
-                        <button data-char="Open">Open</button>
+                        <button data-char="Lab">Lab</button>
                         <button data-char="Source">Source</button>
                     </div>
                 </div>
@@ -281,6 +339,11 @@
                 <div class="action-buttons">
                     <button id="copyBtn" class="button-primary">複製 G-code</button>
                     <button id="downloadBtn" class="button-primary">下載 G-code</button>
+                </div>
+                
+                <div class="save-load-buttons">
+                    <button id="saveBtn" class="button-secondary">儲存設定</button>
+                    <button id="loadBtn" class="button-warning">載入設定</button>
                 </div>
                 
                 <div class="input-group">
@@ -311,6 +374,9 @@
 
     <!-- 複製成功提示訊息 -->
     <div id="copyMessage" class="copy-message">G-code 已複製到剪貼簿！</div>
+    
+    <!-- 錯誤提示訊息 -->
+    <div id="errorMessage" class="error-message">錯誤訊息</div>
 
     <script>
         // 完整的字元定義 (7x7 像素) - 大寫字母
@@ -639,6 +705,431 @@
                 [1,0,0,0,0,0,1],
                 [0,1,1,1,1,1,0]
             ],
+            // 小寫字母
+            'a': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,1,1,1,1,0,0],
+                [0,0,0,0,0,1,0],
+                [0,1,1,1,1,1,0],
+                [1,0,0,0,0,1,0],
+                [0,1,1,1,1,1,0]
+            ],
+            'b': [
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0],
+                [1,1,1,1,1,0,0],
+                [1,0,0,0,0,1,0],
+                [1,0,0,0,0,1,0],
+                [1,1,1,1,1,0,0]
+            ],
+            'c': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,1,1,1,1,0,0],
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,1,0],
+                [0,1,1,1,1,0,0]
+            ],
+            'd': [
+                [0,0,0,0,0,1,0],
+                [0,0,0,0,0,1,0],
+                [0,0,0,0,0,1,0],
+                [0,1,1,1,1,1,0],
+                [1,0,0,0,0,1,0],
+                [1,0,0,0,0,1,0],
+                [0,1,1,1,1,1,0]
+            ],
+            'e': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,1,1,1,1,0,0],
+                [1,0,0,0,0,1,0],
+                [1,1,1,1,1,1,0],
+                [1,0,0,0,0,0,0],
+                [0,1,1,1,1,0,0]
+            ],
+            'f': [
+                [0,0,1,1,1,0,0],
+                [0,1,0,0,0,1,0],
+                [0,1,0,0,0,0,0],
+                [1,1,1,1,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0]
+            ],
+            'g': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,1,1,1,1,1,0],
+                [1,0,0,0,0,1,0],
+                [0,1,1,1,1,1,0],
+                [0,0,0,0,0,1,0],
+                [1,1,1,1,1,0,0]
+            ],
+            'h': [
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0],
+                [1,1,1,1,1,0,0],
+                [1,0,0,0,0,1,0],
+                [1,0,0,0,0,1,0],
+                [1,0,0,0,0,1,0]
+            ],
+            'i': [
+                [0,0,1,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,1,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,1,1,0,0,0]
+            ],
+            'j': [
+                [0,0,0,1,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,1,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [1,0,0,1,0,0,0],
+                [0,1,1,0,0,0,0]
+            ],
+            'k': [
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,1,0,0,0],
+                [1,1,1,0,0,0,0],
+                [1,0,0,1,0,0,0],
+                [1,0,0,0,1,0,0]
+            ],
+            'l': [
+                [0,1,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,1,1,0,0,0]
+            ],
+            'm': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,1,0,1,0,0,0],
+                [1,0,1,0,1,0,0],
+                [1,0,1,0,1,0,0],
+                [1,0,1,0,1,0,0],
+                [1,0,1,0,1,0,0]
+            ],
+            'n': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,1,1,1,0,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0]
+            ],
+            'o': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,1,1,1,0,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [0,1,1,1,0,0,0]
+            ],
+            'p': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,1,1,1,0,0,0],
+                [1,0,0,0,1,0,0],
+                [1,1,1,1,0,0,0],
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0]
+            ],
+            'q': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,1,1,1,1,0,0],
+                [1,0,0,0,1,0,0],
+                [0,1,1,1,1,0,0],
+                [0,0,0,0,1,0,0],
+                [0,0,0,0,1,0,0]
+            ],
+            'r': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,0,1,1,0,0,0],
+                [1,1,0,0,1,0,0],
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0]
+            ],
+            's': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,1,1,1,1,0,0],
+                [1,0,0,0,0,0,0],
+                [0,1,1,1,0,0,0],
+                [0,0,0,0,1,0,0],
+                [1,1,1,1,0,0,0]
+            ],
+            't': [
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [1,1,1,1,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,1,0,0],
+                [0,0,1,1,0,0,0]
+            ],
+            'u': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [0,1,1,1,1,0,0]
+            ],
+            'v': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [0,1,0,1,0,0,0],
+                [0,0,1,0,0,0,0]
+            ],
+            'w': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,1,0,1,0,0],
+                [1,0,1,0,1,0,0],
+                [0,1,0,1,0,0,0]
+            ],
+            'x': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,0,0,0,1,0,0],
+                [0,1,0,1,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,0,1,0,0,0],
+                [1,0,0,0,1,0,0]
+            ],
+            'y': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,0,0,0,1,0,0],
+                [1,0,0,0,1,0,0],
+                [0,1,1,1,1,0,0],
+                [0,0,0,0,1,0,0],
+                [1,1,1,1,0,0,0]
+            ],
+            'z': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,1,1,1,1,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [1,1,1,1,1,0,0]
+            ],
+            // 特殊符號
+            '!': [
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0]
+            ],
+            '?': [
+                [0,1,1,1,1,0,0],
+                [1,0,0,0,0,1,0],
+                [0,0,0,0,0,1,0],
+                [0,0,0,1,1,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,1,0,0,0]
+            ],
+            '-': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,1,1,1,1,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0]
+            ],
+            '=': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [1,1,1,1,1,0,0],
+                [0,0,0,0,0,0,0],
+                [1,1,1,1,1,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0]
+            ],
+            '+': [
+                [0,0,0,0,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [1,1,1,1,1,1,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,0,0,0,0]
+            ],
+            '*': [
+                [0,0,0,0,0,0,0],
+                [0,0,1,0,1,0,0],
+                [0,0,0,1,0,0,0],
+                [1,1,1,1,1,1,0],
+                [0,0,0,1,0,0,0],
+                [0,0,1,0,1,0,0],
+                [0,0,0,0,0,0,0]
+            ],
+            '/': [
+                [0,0,0,0,0,1,0],
+                [0,0,0,0,1,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [1,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0]
+            ],
+            '(': [
+                [0,0,0,1,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,0,1,0,0,0]
+            ],
+            ')': [
+                [0,0,0,1,0,0,0],
+                [0,0,0,0,1,0,0],
+                [0,0,0,0,0,1,0],
+                [0,0,0,0,0,1,0],
+                [0,0,0,0,0,1,0],
+                [0,0,0,0,1,0,0],
+                [0,0,0,1,0,0,0]
+            ],
+            '[': [
+                [0,1,1,1,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,1,1,1,0,0,0]
+            ],
+            ']': [
+                [0,1,1,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,1,1,1,0,0,0]
+            ],
+            '{': [
+                [0,0,0,1,1,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,0,1,1,0,0]
+            ],
+            '}': [
+                [0,1,1,0,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,0,1,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,1,1,0,0,0,0]
+            ],
+            '&': [
+                [0,1,1,0,0,0,0],
+                [1,0,0,1,0,0,0],
+                [1,0,0,1,0,0,0],
+                [0,1,1,0,0,0,0],
+                [1,0,0,1,0,0,0],
+                [1,0,0,1,0,0,0],
+                [0,1,1,0,0,1,0]
+            ],
+            '@': [
+                [0,1,1,1,1,0,0],
+                [1,0,0,0,0,1,0],
+                [1,0,0,1,1,1,0],
+                [1,0,1,0,0,1,0],
+                [1,0,1,0,0,1,0],
+                [1,0,0,1,1,1,0],
+                [0,1,1,1,0,0,0]
+            ],
+            '#': [
+                [0,0,1,0,1,0,0],
+                [0,0,1,0,1,0,0],
+                [1,1,1,1,1,1,0],
+                [0,0,1,0,1,0,0],
+                [1,1,1,1,1,1,0],
+                [0,0,1,0,1,0,0],
+                [0,0,1,0,1,0,0]
+            ],
+            '$': [
+                [0,0,1,0,0,0,0],
+                [0,1,1,1,1,0,0],
+                [1,0,0,0,0,0,0],
+                [0,1,1,1,0,0,0],
+                [0,0,0,0,1,0,0],
+                [1,1,1,1,0,0,0],
+                [0,0,1,0,0,0,0]
+            ],
+            '%': [
+                [1,1,0,0,0,1,0],
+                [1,1,0,0,1,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,0,0,1,1,0],
+                [1,0,0,0,1,1,0],
+                [0,0,0,0,0,0,0]
+            ],
+            '^': [
+                [0,0,0,1,0,0,0],
+                [0,0,1,0,1,0,0],
+                [0,1,0,0,0,1,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0]
+            ],
+            '<': [
+                [0,0,0,0,1,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,1,0,0,0,0,0],
+                [0,0,1,0,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,0,1,0,0]
+            ],
+            '>': [
+                [0,0,1,0,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,0,0,1,0,0],
+                [0,0,0,0,0,1,0],
+                [0,0,0,0,1,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,1,0,0,0,0]
+            ],
             ' ': [
                 [0,0,0,0,0,0,0],
                 [0,0,0,0,0,0,0],
@@ -650,85 +1141,211 @@
             ]
         };
 
-        // 顯示字型預覽
+        // 防抖計時器
+        let debounceTimer;
+        
+        // 顯示字型預覽 (使用防抖技術)
         function showFontPreview() {
-            const text = document.getElementById('textInput').value.toUpperCase();
-            const previewContainer = document.getElementById('pixelPreview');
-            const previewArea = document.querySelector('.preview-area');
-            
-            if (!text || text.trim() === '') {
-                previewContainer.innerHTML = '<div class="empty-message">輸入文字以顯示預覽</div>';
-                previewContainer.style.width = 'auto';
-                return;
-            }
-            
-            previewContainer.innerHTML = '';
-            
-            const previewWidth = previewArea.clientWidth - 40;
-            const charCount = text.length;
-            const charSpacing = 10;
-            const maxPixelSize = 30;
-            const minPixelSize = 8;
-            
-            const requiredSpacing = (charCount - 1) * charSpacing;
-            let pixelSize = Math.floor((previewWidth - requiredSpacing - 10) / (charCount * 7));
-            pixelSize = Math.max(minPixelSize, Math.min(maxPixelSize, pixelSize));
-            
-            for (let charIndex = 0; charIndex < text.length; charIndex++) {
-                const char = text[charIndex];
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const text = document.getElementById('textInput').value;
+                const previewContainer = document.getElementById('pixelPreview');
+                const previewArea = document.querySelector('.preview-area');
                 
-                const charContainer = document.createElement('div');
-                charContainer.className = 'char-preview';
-                charContainer.style.marginRight = charIndex < text.length - 1 ? `${charSpacing}px` : '0';
+                if (!text || text.trim() === '') {
+                    previewContainer.innerHTML = '<div class="empty-message">輸入文字以顯示預覽</div>';
+                    previewContainer.style.width = 'auto';
+                    return;
+                }
                 
-                const pixelGrid = document.createElement('div');
-                pixelGrid.className = 'pixel-grid';
-                pixelGrid.style.gridTemplateColumns = `repeat(7, ${pixelSize}px)`;
-                pixelGrid.style.gridTemplateRows = `repeat(7, ${pixelSize}px)`;
-                pixelGrid.style.gap = '1px';
+                previewContainer.innerHTML = '';
                 
-                if (charMap[char]) {
-                    for (let row = 0; row < 7; row++) {
-                        for (let col = 0; col < 7; col++) {
+                const previewWidth = previewArea.clientWidth - 40;
+                const charCount = text.length;
+                const charSpacing = 10;
+                const maxPixelSize = 30;
+                const minPixelSize = 8;
+                
+                const requiredSpacing = (charCount - 1) * charSpacing;
+                let pixelSize = Math.floor((previewWidth - requiredSpacing - 10) / (charCount * 7));
+                pixelSize = Math.max(minPixelSize, Math.min(maxPixelSize, pixelSize));
+                
+                for (let charIndex = 0; charIndex < text.length; charIndex++) {
+                    const char = text[charIndex];
+                    
+                    const charContainer = document.createElement('div');
+                    charContainer.className = 'char-preview';
+                    charContainer.style.marginRight = charIndex < text.length - 1 ? `${charSpacing}px` : '0';
+                    
+                    const pixelGrid = document.createElement('div');
+                    pixelGrid.className = 'pixel-grid';
+                    pixelGrid.style.gridTemplateColumns = `repeat(7, ${pixelSize}px)`;
+                    pixelGrid.style.gridTemplateRows = `repeat(7, ${pixelSize}px)`;
+                    pixelGrid.style.gap = '1px';
+                    
+                    // 檢查字元是否支援
+                    const charKey = char.toUpperCase() === char && char.toLowerCase() !== char ? 
+                                   char.toUpperCase() : char;
+                    
+                    if (charMap[charKey]) {
+                        for (let row = 0; row < 7; row++) {
+                            for (let col = 0; col < 7; col++) {
+                                const pixelCell = document.createElement('div');
+                                pixelCell.className = 'pixel-cell';
+                                pixelCell.style.width = `${pixelSize}px`;
+                                pixelCell.style.height = `${pixelSize}px`;
+                                
+                                if (charMap[charKey][row][col] === 1) {
+                                    pixelCell.classList.add('active');
+                                }
+                                
+                                pixelGrid.appendChild(pixelCell);
+                            }
+                        }
+                    } else {
+                        // 如果是未定義字元，顯示空白網格
+                        for (let i = 0; i < 49; i++) {
                             const pixelCell = document.createElement('div');
                             pixelCell.className = 'pixel-cell';
                             pixelCell.style.width = `${pixelSize}px`;
                             pixelCell.style.height = `${pixelSize}px`;
-                            
-                            if (charMap[char][row][col] === 1) {
-                                pixelCell.classList.add('active');
-                            }
-                            
                             pixelGrid.appendChild(pixelCell);
                         }
                     }
-                } else {
-                    // 如果是未定義字元，顯示空白網格
-                    for (let i = 0; i < 49; i++) {
-                        const pixelCell = document.createElement('div');
-                        pixelCell.className = 'pixel-cell';
-                        pixelCell.style.width = `${pixelSize}px`;
-                        pixelCell.style.height = `${pixelSize}px`;
-                        pixelGrid.appendChild(pixelCell);
-                    }
+                    
+                    charContainer.appendChild(pixelGrid);
+                    
+                    const charLabel = document.createElement('p');
+                    charLabel.textContent = `"${char}"`;
+                    charContainer.appendChild(charLabel);
+                    
+                    previewContainer.appendChild(charContainer);
                 }
                 
-                charContainer.appendChild(pixelGrid);
-                
-                const charLabel = document.createElement('p');
-                charLabel.textContent = `"${char}"`;
-                charContainer.appendChild(charLabel);
-                
-                previewContainer.appendChild(charContainer);
+                const totalWidth = (charCount * 7 * pixelSize) + requiredSpacing;
+                previewContainer.style.width = `${Math.min(totalWidth, previewWidth - 10)}px`;
+            }, 300); // 防抖延遲300ms
+        }
+
+        // 顯示錯誤訊息
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+            setTimeout(() => {
+                errorElement.classList.remove('show');
+            }, 5000);
+        }
+
+        // 顯示複製成功訊息
+        function showCopyMessage() {
+            const message = document.getElementById('copyMessage');
+            message.classList.add('show');
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 3000);
+        }
+
+        // 輸入驗證
+        function validateInputs() {
+            const text = document.getElementById('textInput').value;
+            const pixelSize = parseFloat(document.getElementById('pixelSize').value);
+            const blockHeight = parseFloat(document.getElementById('blockHeight').value);
+            
+            // 檢查文字輸入
+            if (!text.trim()) {
+                showError('請輸入文字內容');
+                return false;
             }
             
-            const totalWidth = (charCount * 7 * pixelSize) + requiredSpacing;
-            previewContainer.style.width = `${Math.min(totalWidth, previewWidth - 10)}px`;
+            // 檢查文字長度
+            if (text.length > 20) {
+                showError('文字長度不能超過20個字元');
+                return false;
+            }
+            
+            // 檢查是否有不支援的字元
+            const unsupportedChars = [];
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const charKey = char.toUpperCase() === char && char.toLowerCase() !== char ? 
+                              char.toUpperCase() : char;
+                
+                if (!charMap[charKey] && char !== ' ') {
+                    unsupportedChars.push(char);
+                }
+            }
+            
+            if (unsupportedChars.length > 0) {
+                showError(`不支援的字元: ${unsupportedChars.join(', ')}`);
+                return false;
+            }
+            
+            // 檢查像素尺寸
+            if (isNaN(pixelSize) || pixelSize < 1 || pixelSize > 20) {
+                showError('像素尺寸必須在1-20mm之間');
+                return false;
+            }
+            
+            // 檢查厚度
+            if (isNaN(blockHeight) || blockHeight < 0.5 || blockHeight > 10) {
+                showError('厚度必須在0.5-10mm之間');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // 儲存設定到localStorage
+        function saveSettings() {
+            const settings = {
+                text: document.getElementById('textInput').value,
+                pixelSize: document.getElementById('pixelSize').value,
+                blockHeight: document.getElementById('blockHeight').value,
+                printStyle: document.getElementById('printStyle').value
+            };
+            
+            try {
+                localStorage.setItem('7x7lab_settings', JSON.stringify(settings));
+                showCopyMessage(); // 使用相同的樣式顯示成功訊息
+                document.getElementById('copyMessage').textContent = '設定已儲存！';
+            } catch (e) {
+                showError('無法儲存設定: ' + e.message);
+            }
+        }
+
+        // 從localStorage載入設定
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem('7x7lab_settings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    
+                    document.getElementById('textInput').value = settings.text || '';
+                    document.getElementById('pixelSize').value = settings.pixelSize || 5.0;
+                    document.getElementById('blockHeight').value = settings.blockHeight || 2.0;
+                    document.getElementById('printStyle').value = settings.printStyle || 'solid';
+                    
+                    // 更新預覽
+                    showFontPreview();
+                    
+                    showCopyMessage(); // 使用相同的樣式顯示成功訊息
+                    document.getElementById('copyMessage').textContent = '設定已載入！';
+                } else {
+                    showError('沒有儲存的設定');
+                }
+            } catch (e) {
+                showError('無法載入設定: ' + e.message);
+            }
         }
 
         // 生成可直接使用的G-code
         function generateGcode() {
-            const text = document.getElementById('textInput').value.toUpperCase();
+            if (!validateInputs()) {
+                return null;
+            }
+            
+            const text = document.getElementById('textInput').value;
             const pixelSize = parseFloat(document.getElementById('pixelSize').value);
             const blockHeight = parseFloat(document.getElementById('blockHeight').value);
             const printStyle = document.getElementById('printStyle').value;
@@ -803,12 +1420,15 @@ G1 Z10 F${TRAVEL_SPEED * 60}
             
             for (let charIndex = 0; charIndex < text.length; charIndex++) {
                 const char = text[charIndex];
-                if (charMap[char]) {
+                const charKey = char.toUpperCase() === char && char.toLowerCase() !== char ? 
+                              char.toUpperCase() : char;
+                
+                if (charMap[charKey]) {
                     const charX = xOffset;
                     
                     for (let row = 0; row < 7; row++) {
                         for (let col = 0; col < 7; col++) {
-                            if (charMap[char][row][col] === 1) {
+                            if (charMap[charKey][row][col] === 1) {
                                 const x = charX + col * pixelSize;
                                 const y = yOffset + (6 - row) * pixelSize;
                                 pixelPositions.push({ x, y });
@@ -947,30 +1567,21 @@ M30 ; 程式結束
             return gcode;
         }
 
-        // 顯示複製成功訊息
-        function showCopyMessage() {
-            const message = document.getElementById('copyMessage');
-            message.classList.add('show');
-            setTimeout(() => {
-                message.classList.remove('show');
-            }, 3000);
-        }
-
         // 複製 G-code 到剪貼簿
         function copyGcode() {
-            const text = document.getElementById('textInput').value;
-            if (!text || text.trim() === '') {
-                alert('請輸入有效的文字！');
+            if (!validateInputs()) {
                 return;
             }
             
             const gcode = generateGcode();
+            if (!gcode) return;
             
             // 使用Clipboard API
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(gcode)
                     .then(() => {
                         showCopyMessage();
+                        document.getElementById('copyMessage').textContent = 'G-code 已複製到剪貼簿！';
                     })
                     .catch(err => {
                         console.error('複製失敗:', err);
@@ -997,12 +1608,13 @@ M30 ; 程式結束
                 const successful = document.execCommand('copy');
                 if (successful) {
                     showCopyMessage();
+                    document.getElementById('copyMessage').textContent = 'G-code 已複製到剪貼簿！';
                 } else {
-                    alert('無法複製到剪貼簿，請手動複製生成的G-code');
+                    showError('無法複製到剪貼簿，請手動複製生成的G-code');
                 }
             } catch (err) {
                 console.error('降級複製失敗:', err);
-                alert('複製失敗，請手動複製生成的文字');
+                showError('複製失敗，請手動複製生成的文字');
             }
             
             document.body.removeChild(textarea);
@@ -1010,14 +1622,14 @@ M30 ; 程式結束
 
         // 下載 G-code 檔案
         function downloadGcode() {
-            const text = document.getElementById('textInput').value;
-            if (!text || text.trim() === '') {
-                alert('請輸入有效的文字！');
+            if (!validateInputs()) {
                 return;
             }
             
             const gcode = generateGcode();
-            const cleanText = text.replace(/[^a-zA-Z0-9]/g, '_');
+            if (!gcode) return;
+            
+            const cleanText = document.getElementById('textInput').value.replace(/[^a-zA-Z0-9]/g, '_');
             const blob = new Blob([gcode], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1034,6 +1646,8 @@ M30 ; 程式結束
             // 事件監聽器
             document.getElementById('copyBtn').addEventListener('click', copyGcode);
             document.getElementById('downloadBtn').addEventListener('click', downloadGcode);
+            document.getElementById('saveBtn').addEventListener('click', saveSettings);
+            document.getElementById('loadBtn').addEventListener('click', loadSettings);
             
             // 快速範例按鈕
             document.querySelectorAll('.char-buttons button').forEach(button => {
@@ -1044,7 +1658,7 @@ M30 ; 程式結束
                 });
             });
             
-            // 輸入變化時更新預覽
+            // 輸入變化時更新預覽 (使用防抖)
             document.getElementById('textInput').addEventListener('input', showFontPreview);
             document.getElementById('pixelSize').addEventListener('change', showFontPreview);
             document.getElementById('blockHeight').addEventListener('change', showFontPreview);
@@ -1052,6 +1666,20 @@ M30 ; 程式結束
             
             // 視窗大小變化時重新計算預覽
             window.addEventListener('resize', showFontPreview);
+            
+            // 嘗試載入儲存的設定
+            try {
+                const saved = localStorage.getItem('7x7lab_settings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    document.getElementById('textInput').value = settings.text || '';
+                    document.getElementById('pixelSize').value = settings.pixelSize || 5.0;
+                    document.getElementById('blockHeight').value = settings.blockHeight || 2.0;
+                    document.getElementById('printStyle').value = settings.printStyle || 'solid';
+                }
+            } catch (e) {
+                console.log('無法載入設定:', e);
+            }
             
             // 初始顯示預覽
             showFontPreview();
