@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>7x7 Lab - 像素文字生成器</title>
     <style>
+        /* 保持原有CSS樣式不變 */
         * {
             margin: 0;
             padding: 0;
@@ -430,7 +431,8 @@
                         <div style="margin-bottom: 5px;">線材直徑: 1.75mm</div>
                         <div style="margin-bottom: 5px;">層高: 0.2mm</div>
                         <div style="margin-bottom: 5px;">第一層高度: 0.3mm</div>
-                        <div>回抽距離: 1.0mm</div>
+                        <div style="margin-bottom: 5px;">回抽距離: 1.0mm</div>
+                        <div>列印床尺寸: 220x220mm</div>
                     </div>
                 </div>
             </div>
@@ -599,7 +601,7 @@
             return canvas;
         }
         
-        // 計算2D路徑（修正Y軸方向）
+        // 計算2D路徑（保持與Canvas一致的座標系）
         function calculatePath() {
             const text = document.getElementById('textInput').value;
             const pixelSize = parseFloat(document.getElementById('pixelSize').value);
@@ -612,7 +614,7 @@
             let lastPosition = { x: 30, y: 30 };
             let pixelPositions = [];
             
-            // 收集所有像素位置（修正Y軸方向）
+            // 收集所有像素位置（Canvas座標系：Y軸向下為正）
             for (let charIndex = 0; charIndex < text.length; charIndex++) {
                 const char = text[charIndex];
                 const charKey = char.toUpperCase() === char && char.toLowerCase() !== char ? 
@@ -625,7 +627,7 @@
                         for (let col = 0; col < 7; col++) {
                             if (charMap[charKey][row][col] === 1) {
                                 const x = charX + col * pixelSize;
-                                const y = yOffset + row * pixelSize; // 修正：正常Y軸方向（從上往下）
+                                const y = yOffset + row * pixelSize; // Canvas座標系：Y軸向下為正
                                 pixelPositions.push({ x, y });
                             }
                         }
@@ -717,7 +719,7 @@
             return pathSegments;
         }
         
-        // 繪製路徑（帶縮放和平移，修正Y軸方向）
+        // 繪製路徑（帶縮放和平移）
         function drawPath(showAnimation = false) {
             const canvas = initCanvas();
             const ctx = canvas.getContext('2d');
@@ -826,7 +828,7 @@
             ctx.fill();
         }
         
-        // 繪製像素位置（修正Y軸方向）
+        // 繪製像素位置
         function drawPixels(ctx) {
             const text = document.getElementById('textInput').value;
             const pixelSize = parseFloat(document.getElementById('pixelSize').value);
@@ -849,7 +851,7 @@
                         for (let col = 0; col < 7; col++) {
                             if (charMap[charKey][row][col] === 1) {
                                 const x = charX + col * pixelSize;
-                                const y = yOffset + row * pixelSize; // 正常Y軸方向（從上往下）
+                                const y = yOffset + row * pixelSize;
                                 
                                 // 繪製像素方塊
                                 ctx.fillRect(x, y, pixelSize, pixelSize);
@@ -1082,7 +1084,7 @@
             };
             
             // 生成G-code頭部
-            let gcode = `; 7x7像素文字 - 可直接列印版本
+            let gcode = `; 7x7像素文字 - 可直接列印版本 (Y軸已修正)
 ; 文字: ${text}
 ; 像素尺寸: ${pixelSize}mm
 ; 厚度: ${blockHeight}mm (${totalLayers}層)
@@ -1091,6 +1093,7 @@
 ; 線材直徑: ${FILAMENT_DIAMETER}mm
 ; 層高: ${LAYER_HEIGHT}mm
 ; 第一層高度: ${FIRST_LAYER_HEIGHT}mm
+; 列印床尺寸: 220x220mm
 ; 生成時間: ${new Date().toLocaleString()}
 
 ; ============ 初始化設定 ============
@@ -1117,10 +1120,16 @@ G1 Z10 F${TRAVEL_SPEED * 60}
 
 `;
             
-            // 計算所有像素的位置（與2D預覽一致的Y軸方向）
+            // 計算所有像素的位置（修正Y軸方向：使用3D列印機座標系）
+            // 3D列印機座標系：原點在左下角，Y軸向前為正
             let pixelPositions = [];
-            let xOffset = 20;
-            let yOffset = 20;
+            let xOffset = 20; // X起始位置
+            let yOffset = 20; // Y起始位置（從列印床後方開始）
+            
+            // 計算總寬度以中心對齊
+            const charCount = text.split('').filter(char => charMap[char.toUpperCase()] || charMap[char]).length;
+            const totalWidth = charCount * 8 * pixelSize;
+            xOffset = (220 - totalWidth) / 2; // 在220mm列印床上置中
             
             for (let charIndex = 0; charIndex < text.length; charIndex++) {
                 const char = text[charIndex];
@@ -1134,7 +1143,9 @@ G1 Z10 F${TRAVEL_SPEED * 60}
                         for (let col = 0; col < 7; col++) {
                             if (charMap[charKey][row][col] === 1) {
                                 const x = charX + col * pixelSize;
-                                const y = yOffset + row * pixelSize; // 與2D預覽一致的Y軸方向
+                                // 重要修正：使用3D列印機的Y軸方向
+                                // 在3D列印機中，Y軸向前為正，所以我們要保持相同的Y值
+                                const y = yOffset + row * pixelSize; // 與預覽一致的Y軸方向
                                 pixelPositions.push({ x, y });
                             }
                         }
@@ -1148,25 +1159,27 @@ G1 Z10 F${TRAVEL_SPEED * 60}
                 gcode += `; ============ 第一層 ============\n`;
                 gcode += `G1 Z${FIRST_LAYER_HEIGHT.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
                 
+                let lastPos = { x: 0, y: 0 };
+                
                 for (let i = 0; i < pixelPositions.length; i++) {
                     const pos = pixelPositions[i];
                     
-                    // 移動到像素位置
+                    // 移動到像素位置（使用相對移動）
                     gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
                     
+                    // 開始擠出
+                    gcode += `G1 E${RETRACT_DISTANCE} F${RETRACT_SPEED * 60} ; 取消回抽\n`;
+                    
                     if (printStyle === 'solid') {
-                        // 實心方塊
-                        const perimeterLength = pixelSize * 4;
-                        const perimeterExtrusion = calculateExtrusion(perimeterLength, FIRST_LAYER_HEIGHT);
-                        
-                        gcode += `G1 E${perimeterExtrusion.toFixed(4)} F${RETRACT_SPEED * 60}\n`;
+                        // 實心方塊 - 先畫輪廓
+                        const perimeterExtrusion = calculateExtrusion(pixelSize * 4, FIRST_LAYER_HEIGHT);
                         
                         gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)} F${FIRST_LAYER_SPEED * 60}\n`;
                         gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
                         gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
                         gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
                         
-                        // 填充
+                        // 填充 - 橫線填充
                         const fillSpacing = 0.4;
                         const fillLines = Math.floor(pixelSize / fillSpacing);
                         
@@ -1174,41 +1187,95 @@ G1 Z10 F${TRAVEL_SPEED * 60}
                             const fillY = pos.y + line * fillSpacing;
                             const fillExtrusion = calculateExtrusion(pixelSize, FIRST_LAYER_HEIGHT);
                             
-                            gcode += `G1 X${pos.x.toFixed(2)} Y${fillY.toFixed(2)} E0\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${fillY.toFixed(2)} F${FIRST_LAYER_SPEED * 60}\n`;
                             gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${fillY.toFixed(2)} E${fillExtrusion.toFixed(4)}\n`;
                         }
                     } else {
-                        // 空心方塊
-                        const perimeterLength = pixelSize * 4;
-                        const extrusionAmount = calculateExtrusion(perimeterLength, FIRST_LAYER_HEIGHT);
+                        // 空心方塊 - 只畫輪廓
+                        const perimeterExtrusion = calculateExtrusion(pixelSize * 4, FIRST_LAYER_HEIGHT);
                         
-                        gcode += `G1 E${extrusionAmount.toFixed(4)} F${RETRACT_SPEED * 60}\n`;
-                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${extrusionAmount.toFixed(4)} F${FIRST_LAYER_SPEED * 60}\n`;
-                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
-                        gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
-                        gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)} F${FIRST_LAYER_SPEED * 60}\n`;
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
                     }
                     
                     // 回抽
-                    gcode += `G1 E-${RETRACT_DISTANCE} F${RETRACT_SPEED * 60}\n`;
-                    gcode += `G1 Z${(FIRST_LAYER_HEIGHT + 0.5).toFixed(2)} F${TRAVEL_SPEED * 60}\n\n`;
+                    gcode += `G1 E-${RETRACT_DISTANCE} F${RETRACT_SPEED * 60} ; 回抽\n`;
+                    
+                    lastPos = { x: pos.x, y: pos.y };
+                }
+                gcode += `G1 Z${(FIRST_LAYER_HEIGHT + 1).toFixed(2)} F${TRAVEL_SPEED * 60} ; 抬升噴頭\n\n`;
+            }
+            
+            // 列印其他層
+            if (normalLayers > 0) {
+                for (let layer = 1; layer <= normalLayers; layer++) {
+                    const currentZ = FIRST_LAYER_HEIGHT + layer * LAYER_HEIGHT;
+                    
+                    gcode += `; ============ 第 ${layer + firstLayer} 層 ============\n`;
+                    gcode += `G1 Z${currentZ.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
+                    
+                    for (let i = 0; i < pixelPositions.length; i++) {
+                        const pos = pixelPositions[i];
+                        
+                        // 移動到像素位置
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
+                        
+                        // 開始擠出
+                        gcode += `G1 E${RETRACT_DISTANCE} F${RETRACT_SPEED * 60} ; 取消回抽\n`;
+                        
+                        if (printStyle === 'solid') {
+                            // 實心方塊
+                            const perimeterExtrusion = calculateExtrusion(pixelSize * 4, LAYER_HEIGHT);
+                            
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)} F${PRINT_SPEED * 60}\n`;
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                            
+                            // 填充
+                            const fillSpacing = 0.4;
+                            const fillLines = Math.floor(pixelSize / fillSpacing);
+                            
+                            for (let line = 1; line < fillLines; line++) {
+                                const fillY = pos.y + line * fillSpacing;
+                                const fillExtrusion = calculateExtrusion(pixelSize, LAYER_HEIGHT);
+                                
+                                gcode += `G1 X${pos.x.toFixed(2)} Y${fillY.toFixed(2)} F${PRINT_SPEED * 60}\n`;
+                                gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${fillY.toFixed(2)} E${fillExtrusion.toFixed(4)}\n`;
+                            }
+                        } else {
+                            // 空心方塊
+                            const perimeterExtrusion = calculateExtrusion(pixelSize * 4, LAYER_HEIGHT);
+                            
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)} F${PRINT_SPEED * 60}\n`;
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        }
+                        
+                        // 回抽
+                        gcode += `G1 E-${RETRACT_DISTANCE} F${RETRACT_SPEED * 60} ; 回抽\n`;
+                    }
+                    gcode += `G1 Z${(currentZ + 1).toFixed(2)} F${TRAVEL_SPEED * 60} ; 抬升噴頭\n\n`;
                 }
             }
             
             // 列印完成
             gcode += `; ============ 列印完成 ============
-G1 Z20 F${TRAVEL_SPEED * 60}
-G28 X Y
-M104 S0
-M140 S0
-M107
-M84
-M30
+G1 Z20 F${TRAVEL_SPEED * 60} ; 抬升噴頭
+G28 X Y ; X、Y軸歸零
+M104 S0 ; 關閉噴頭加熱
+M140 S0 ; 關閉熱床加熱
+M107 ; 關閉風扇
+M84 ; 關閉步進馬達
+M30 ; 程式結束
 `;
             
             return gcode;
         }
-        
+
         // 顯示字型預覽
         function showFontPreview() {
             const text = document.getElementById('textInput').value;
