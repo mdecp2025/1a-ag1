@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7x7 Lab - 像素文字生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .control-panel {
+            flex: 1;
+            min-width: 300px;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+        
+        .preview-container {
+            flex: 2;
+            min-width: 400px;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #fff;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            background-color: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: #3a3a3a;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        button:hover {
+            background-color: #4a4a4a;
+        }
+        
+        .button-primary {
+            background-color: #4CAF50;
+        }
+        
+        .button-primary:hover {
+            background-color: #3d8b40;
+        }
+        
+        .preview-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .pixel-preview-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+            max-width: 100%;
+            padding: 5px;
+        }
+        
+        .char-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .char-preview p {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .pixel-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(7, 1fr);
+            gap: 1px;
+        }
+        
+        .pixel-cell {
+            border-radius: 1px;
+            background-color: #333;
+            transition: background-color 0.2s;
+        }
+        
+        .pixel-cell.active {
+            background-color: #4CAF50;
+        }
+        
+        .empty-message {
+            font-size: 1.2rem;
+            color: #666;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .char-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .copy-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: 600;
+        }
+        
+        .copy-message.show {
+            opacity: 1;
+        }
+        
+        /* 2D路徑預覽樣式 */
+        .path-preview-container {
+            width: 100%;
+            height: 400px;
+            background-color: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+        
+        .path-preview-container:active {
+            cursor: grabbing;
+        }
+        
+        #pathCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .path-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .path-controls button {
+            width: auto;
+            flex: 1;
+            min-width: 100px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .button-secondary {
+            background-color: #2196F3;
+        }
+        
+        .button-secondary:hover {
+            background-color: #0b7dda;
+        }
+        
+        .button-warning {
+            background-color: #ff9800;
+        }
+        
+        .button-warning:hover {
+            background-color: #e68900;
+        }
+        
+        .path-stats {
+            background-color: #2d2d2d;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .path-stats span {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 10;
+        }
+        
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            background-color: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 5px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        
+        .zoom-btn:hover {
+            background-color: #3a3a3a;
+        }
+        
+        .zoom-display {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(30, 30, 30, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            color: #aaa;
+            z-index: 10;
+        }
+        
+        .instruction {
+            color: #888;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
+        .axis-label {
+            position: absolute;
+            font-size: 10px;
+            color: #888;
+            z-index: 5;
+        }
+        
+        .axis-label.x {
+            bottom: 5px;
+            right: 5px;
+        }
+        
+        .axis-label.y {
+            top: 5px;
+            left: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .control-panel, .preview-container {
+                min-width: 100%;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .pixel-preview-container {
+                gap: 8px;
+            }
+            
+            .path-controls {
+                flex-direction: column;
+            }
+            
+            .path-controls button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>7x7 lab</h1>
+            <p class="subtitle">像素文字 G-code 生成器 - 可直接3D列印版本</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="control-panel">
+                <h2 class="section-title">控制面板</h2>
+                
+                <div class="input-group">
+                    <label for="textInput">輸入文字 (大小寫字母、數字、符號):</label>
+                    <input type="text" id="textInput" maxlength="15" placeholder="例如: Hello World 123!" value="HELLO">
+                </div>
+                
+                <div class="input-group">
+                    <label>快速範例:</label>
+                    <div class="char-buttons">
+                        <button data-char="HELLO">HELLO</button>
+                        <button data-char="Hello">Hello</button>
+                        <button data-char="NFU">NFU</button>
+                        <button data-char="ABC">ABC</button>
+                        <button data-char="123">123</button>
+                        <button data-char="3D PRINT">3D PRINT</button>
+                        <button data-char="Lab!">Lab!</button>
+                        <button data-char="Source">Source</button>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="pixelSize">像素尺寸 (mm):</label>
+                    <input type="number" id="pixelSize" value="5.0" min="1" max="20" step="0.5">
+                </div>
+                
+                <div class="input-group">
+                    <label for="blockHeight">厚度 (mm):</label>
+                    <input type="number" id="blockHeight" value="2.0" min="0.5" max="10" step="0.5">
+                </div>
+                
+                <div class="input-group">
+                    <label for="printStyle">列印樣式:</label>
+                    <select id="printStyle">
+                        <option value="solid">實心</option>
+                        <option value="hollow">空心</option>
+                    </select>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="copyBtn" class="button-primary">複製 G-code</button>
+                    <button id="downloadBtn" class="button-primary">下載 G-code</button>
+                </div>
+                
+                <div class="input-group">
+                    <label>G-code 參數 (固定值):</label>
+                    <div style="background-color: #2d2d2d; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                        <div style="margin-bottom: 5px;">噴嘴直徑: 0.4mm</div>
+                        <div style="margin-bottom: 5px;">線材直徑: 1.75mm</div>
+                        <div style="margin-bottom: 5px;">層高: 0.2mm</div>
+                        <div style="margin-bottom: 5px;">第一層高度: 0.3mm</div>
+                        <div>回抽距離: 1.0mm</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview-container">
+                <h2 class="section-title">字型預覽</h2>
+                <div class="preview-area">
+                    <div class="pixel-preview-container" id="pixelPreview">
+                        <div class="empty-message">輸入文字以顯示預覽</div>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #aaa; font-size: 0.9rem; margin-top: 10px;">
+                    每個字元顯示為 7x7 像素方塊，綠色方塊表示需要列印的部分
+                </p>
+                
+                <h2 class="section-title" style="margin-top: 30px;">2D列印路徑預覽 (俯視圖)</h2>
+                <div class="path-preview-container" id="pathContainer">
+                    <canvas id="pathCanvas"></canvas>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoomInBtn">+</button>
+                        <button class="zoom-btn" id="zoomOutBtn">-</button>
+                        <button class="zoom-btn" id="resetViewBtn">↺</button>
+                    </div>
+                    <div class="zoom-display">
+                        縮放: <span id="zoomLevel">100%</span>
+                    </div>
+                    <div class="axis-label x">X</div>
+                    <div class="axis-label y">Y</div>
+                </div>
+                <p class="instruction">使用滑鼠滾輪縮放，拖曳平移，或使用右上角控制按鈕</p>
+                <div class="path-stats">
+                    總像素數: <span id="totalPixels">0</span> | 
+                    路徑長度: <span id="pathLength">0</span>mm | 
+                    移動長度: <span id="travelLength">0</span>mm |
+                    回抽次數: <span id="retractCount">0</span>
+                </div>
+                <div class="path-controls">
+                    <button id="generatePathBtn" class="button-primary">產生路徑</button>
+                    <button id="playPathBtn" class="button-secondary">播放</button>
+                    <button id="pausePathBtn" class="button-warning">暫停</button>
+                    <button id="resetPathBtn" class="button-secondary">重設</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 複製成功提示訊息 -->
+    <div id="copyMessage" class="copy-message">G-code 已複製到剪貼簿！</div>
+
+    <script>
+        // 完整的字元定義 (7x7 像素)
+        const charMap = {
+            // 為了節省篇幅，這裡保留完整的字元定義
+            // 大寫字母 A-Z
+            'A': [[0,0,1,1,1,0,0],[0,1,0,0,0,1,0],[1,0,0,0,0,0,1],[1,1,1,1,1,1,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1]],
+            'B': [[1,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,0]],
+            'C': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            'D': [[1,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,0]],
+            'E': [[1,1,1,1,1,1,1],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,1,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,1,1]],
+            'F': [[1,1,1,1,1,1,1],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,1,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0]],
+            'G': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,0],[1,0,0,1,1,1,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            'H': [[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1]],
+            'I': [[1,1,1,1,1,1,1],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[1,1,1,1,1,1,1]],
+            'J': [[0,0,0,0,0,0,1],[0,0,0,0,0,0,1],[0,0,0,0,0,0,1],[0,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            'K': [[1,0,0,0,0,1,0],[1,0,0,0,1,0,0],[1,0,0,1,0,0,0],[1,1,1,0,0,0,0],[1,0,0,1,0,0,0],[1,0,0,0,1,0,0],[1,0,0,0,0,1,0]],
+            'L': [[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,1,1]],
+            'M': [[1,0,0,0,0,0,1],[1,1,0,0,0,1,1],[1,0,1,0,1,0,1],[1,0,0,1,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1]],
+            'N': [[1,0,0,0,0,0,1],[1,1,0,0,0,0,1],[1,0,1,0,0,0,1],[1,0,0,1,0,0,1],[1,0,0,0,1,0,1],[1,0,0,0,0,1,1],[1,0,0,0,0,0,1]],
+            'O': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            'P': [[1,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0]],
+            'Q': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,1,0,0,1],[1,0,0,0,1,0,1],[0,1,1,1,1,1,1]],
+            'R': [[1,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,0],[1,0,0,1,0,0,0],[1,0,0,0,1,0,0],[1,0,0,0,0,1,0]],
+            'S': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,0],[0,1,1,1,1,1,0],[0,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            'T': [[1,1,1,1,1,1,1],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0]],
+            'U': [[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            'V': [[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,0,0,0,1,0],[0,0,1,0,1,0,0],[0,0,0,1,0,0,0]],
+            'W': [[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,1,0,0,1],[1,0,1,0,1,0,1],[1,1,0,0,0,1,1],[1,0,0,0,0,0,1]],
+            'X': [[1,0,0,0,0,0,1],[0,1,0,0,0,1,0],[0,0,1,0,1,0,0],[0,0,0,1,0,0,0],[0,0,1,0,1,0,0],[0,1,0,0,0,1,0],[1,0,0,0,0,0,1]],
+            'Y': [[1,0,0,0,0,0,1],[0,1,0,0,0,1,0],[0,0,1,0,1,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0]],
+            'Z': [[1,1,1,1,1,1,1],[0,0,0,0,0,1,0],[0,0,0,0,1,0,0],[0,0,0,1,0,0,0],[0,0,1,0,0,0,0],[0,1,0,0,0,0,0],[1,1,1,1,1,1,1]],
+            // 數字 0-9
+            '0': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,1,0,1],[1,0,0,1,0,0,1],[1,0,1,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            '1': [[0,0,0,1,0,0,0],[0,0,1,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,1,1,1,1,1,0]],
+            '2': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[0,0,0,0,0,0,1],[0,0,0,1,1,1,0],[0,1,1,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,1,1]],
+            '3': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[0,0,0,0,0,0,1],[0,0,1,1,1,1,0],[0,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            '4': [[0,0,0,0,1,0,0],[0,0,0,1,1,0,0],[0,0,1,0,1,0,0],[0,1,0,0,1,0,0],[1,1,1,1,1,1,1],[0,0,0,0,1,0,0],[0,0,0,0,1,0,0]],
+            '5': [[1,1,1,1,1,1,1],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,1,0],[0,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            '6': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,0],[1,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            '7': [[1,1,1,1,1,1,1],[0,0,0,0,0,0,1],[0,0,0,0,0,1,0],[0,0,0,0,1,0,0],[0,0,0,1,0,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0]],
+            '8': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            '9': [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,1],[0,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0]],
+            // 小寫字母 a-z
+            'a': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,1,1,1,1,0,0],[0,0,0,0,0,1,0],[0,1,1,1,1,1,0],[1,0,0,0,0,1,0],[0,1,1,1,1,1,0]],
+            'b': [[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,0,0],[1,0,0,0,0,1,0],[1,0,0,0,0,1,0],[1,1,1,1,1,0,0]],
+            'c': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,1,1,1,1,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,1,0],[0,1,1,1,1,0,0]],
+            'd': [[0,0,0,0,0,1,0],[0,0,0,0,0,1,0],[0,0,0,0,0,1,0],[0,1,1,1,1,1,0],[1,0,0,0,0,1,0],[1,0,0,0,0,1,0],[0,1,1,1,1,1,0]],
+            'e': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,1,1,1,1,0,0],[1,0,0,0,0,1,0],[1,1,1,1,1,1,0],[1,0,0,0,0,0,0],[0,1,1,1,1,0,0]],
+            'f': [[0,0,1,1,1,0,0],[0,1,0,0,0,1,0],[0,1,0,0,0,0,0],[1,1,1,1,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0]],
+            'g': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,1,1,1,1,1,0],[1,0,0,0,0,1,0],[0,1,1,1,1,1,0],[0,0,0,0,0,1,0],[1,1,1,1,1,0,0]],
+            'h': [[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,0,0],[1,0,0,0,0,1,0],[1,0,0,0,0,1,0],[1,0,0,0,0,1,0]],
+            'i': [[0,0,1,0,0,0,0],[0,0,0,0,0,0,0],[0,1,1,0,0,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,1,1,1,0,0,0]],
+            'j': [[0,0,0,1,0,0,0],[0,0,0,0,0,0,0],[0,0,1,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[1,0,0,1,0,0,0],[0,1,1,0,0,0,0]],
+            'k': [[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,1,0,0],[1,0,0,1,0,0,0],[1,1,1,0,0,0,0],[1,0,0,1,0,0,0],[1,0,0,0,1,0,0]],
+            'l': [[0,1,1,0,0,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,1,1,1,0,0,0]],
+            'm': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,1,0,1,0,0,0],[1,0,1,0,1,0,0],[1,0,1,0,1,0,0],[1,0,1,0,1,0,0],[1,0,1,0,1,0,0]],
+            'n': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,1,1,1,0,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0]],
+            'o': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,1,1,1,0,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[0,1,1,1,0,0,0]],
+            'p': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,1,1,1,0,0,0],[1,0,0,0,1,0,0],[1,1,1,1,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0]],
+            'q': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,1,1,1,1,0,0],[1,0,0,0,1,0,0],[0,1,1,1,1,0,0],[0,0,0,0,1,0,0],[0,0,0,0,1,0,0]],
+            'r': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,0,1,1,0,0,0],[1,1,0,0,1,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0]],
+            's': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,1,1,1,1,0,0],[1,0,0,0,0,0,0],[0,1,1,1,0,0,0],[0,0,0,0,1,0,0],[1,1,1,1,0,0,0]],
+            't': [[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[1,1,1,1,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,1,0,0],[0,0,1,1,0,0,0]],
+            'u': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[0,1,1,1,1,0,0]],
+            'v': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[0,1,0,1,0,0,0],[0,0,1,0,0,0,0]],
+            'w': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[1,0,1,0,1,0,0],[1,0,1,0,1,0,0],[0,1,0,1,0,0,0]],
+            'x': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,0,0,0,1,0,0],[0,1,0,1,0,0,0],[0,0,1,0,0,0,0],[0,1,0,1,0,0,0],[1,0,0,0,1,0,0]],
+            'y': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,0,0,0,1,0,0],[1,0,0,0,1,0,0],[0,1,1,1,1,0,0],[0,0,0,0,1,0,0],[1,1,1,1,0,0,0]],
+            'z': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,1,1,1,1,0,0],[0,0,0,1,0,0,0],[0,0,1,0,0,0,0],[0,1,0,0,0,0,0],[1,1,1,1,1,0,0]],
+            // 特殊符號
+            '!': [[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0]],
+            '?': [[0,1,1,1,1,0,0],[1,0,0,0,0,1,0],[0,0,0,0,0,1,0],[0,0,0,1,1,0,0],[0,0,0,1,0,0,0],[0,0,0,0,0,0,0],[0,0,0,1,0,0,0]],
+            '-': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,1,1,1,1,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
+            '=': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[1,1,1,1,1,0,0],[0,0,0,0,0,0,0],[1,1,1,1,1,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
+            '+': [[0,0,0,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[1,1,1,1,1,1,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,0,0,0]],
+            '*': [[0,0,0,0,0,0,0],[0,0,1,0,1,0,0],[0,0,0,1,0,0,0],[1,1,1,1,1,1,0],[0,0,0,1,0,0,0],[0,0,1,0,1,0,0],[0,0,0,0,0,0,0]],
+            '/': [[0,0,0,0,0,1,0],[0,0,0,0,1,0,0],[0,0,0,1,0,0,0],[0,0,1,0,0,0,0],[0,1,0,0,0,0,0],[1,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
+            '(': [[0,0,0,1,0,0,0],[0,0,1,0,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,0,0,0]],
+            ')': [[0,0,0,1,0,0,0],[0,0,0,0,1,0,0],[0,0,0,0,0,1,0],[0,0,0,0,0,1,0],[0,0,0,0,0,1,0],[0,0,0,0,1,0,0],[0,0,0,1,0,0,0]],
+            '[': [[0,1,1,1,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[0,1,0,0,0,0,0],[0,1,1,1,0,0,0]],
+            ']': [[0,1,1,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,1,1,1,0,0,0]],
+            '{': [[0,0,0,1,1,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,1,0,0]],
+            '}': [[0,1,1,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,1,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,1,1,0,0,0,0]],
+            '&': [[0,1,1,0,0,0,0],[1,0,0,1,0,0,0],[1,0,0,1,0,0,0],[0,1,1,0,0,0,0],[1,0,0,1,0,0,0],[1,0,0,1,0,0,0],[0,1,1,0,0,1,0]],
+            '@': [[0,1,1,1,1,0,0],[1,0,0,0,0,1,0],[1,0,0,1,1,1,0],[1,0,1,0,0,1,0],[1,0,1,0,0,1,0],[1,0,0,1,1,1,0],[0,1,1,1,0,0,0]],
+            '#': [[0,0,1,0,1,0,0],[0,0,1,0,1,0,0],[1,1,1,1,1,1,0],[0,0,1,0,1,0,0],[1,1,1,1,1,1,0],[0,0,1,0,1,0,0],[0,0,1,0,1,0,0]],
+            '$': [[0,0,1,0,0,0,0],[0,1,1,1,1,0,0],[1,0,0,0,0,0,0],[0,1,1,1,0,0,0],[0,0,0,0,1,0,0],[1,1,1,1,0,0,0],[0,0,1,0,0,0,0]],
+            '%': [[1,1,0,0,0,1,0],[1,1,0,0,1,0,0],[0,0,0,1,0,0,0],[0,0,1,0,0,0,0],[0,1,0,0,1,1,0],[1,0,0,0,1,1,0],[0,0,0,0,0,0,0]],
+            '^': [[0,0,0,1,0,0,0],[0,0,1,0,1,0,0],[0,1,0,0,0,1,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
+            '<': [[0,0,0,0,1,0,0],[0,0,0,1,0,0,0],[0,0,1,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,1,0,0]],
+            '>': [[0,0,1,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,1,0,0],[0,0,0,0,0,1,0],[0,0,0,0,1,0,0],[0,0,0,1,0,0,0],[0,0,1,0,0,0,0]],
+            ' ': [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]
+        };
+
+        // 2D路徑相關變數
+        let pathAnimationId = null;
+        let isPathPlaying = false;
+        let pathSegments = [];
+        let currentSegment = 0;
+        
+        // 縮放和平移相關變數
+        let zoom = 1.0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        
+        // 初始化Canvas
+        function initCanvas() {
+            const canvas = document.getElementById('pathCanvas');
+            const container = document.querySelector('.path-preview-container');
+            
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            return canvas;
+        }
+        
+        // 計算2D路徑（修正Y軸方向）
+        function calculatePath() {
+            const text = document.getElementById('textInput').value;
+            const pixelSize = parseFloat(document.getElementById('pixelSize').value);
+            const printStyle = document.getElementById('printStyle').value;
+            
+            // 重置路徑數據
+            pathSegments = [];
+            let xOffset = 50;
+            let yOffset = 50;
+            let lastPosition = { x: 30, y: 30 };
+            let pixelPositions = [];
+            
+            // 收集所有像素位置（修正Y軸方向）
+            for (let charIndex = 0; charIndex < text.length; charIndex++) {
+                const char = text[charIndex];
+                const charKey = char.toUpperCase() === char && char.toLowerCase() !== char ? 
+                              char.toUpperCase() : char;
+                
+                if (charMap[charKey]) {
+                    const charX = xOffset;
+                    
+                    for (let row = 0; row < 7; row++) {
+                        for (let col = 0; col < 7; col++) {
+                            if (charMap[charKey][row][col] === 1) {
+                                const x = charX + col * pixelSize;
+                                const y = yOffset + row * pixelSize; // 修正：正常Y軸方向（從上往下）
+                                pixelPositions.push({ x, y });
+                            }
+                        }
+                    }
+                    xOffset += 8 * pixelSize; // 字元間距
+                }
+            }
+            
+            // 更新統計資訊
+            document.getElementById('totalPixels').textContent = pixelPositions.length;
+            
+            // 計算路徑
+            let totalPathLength = 0;
+            let totalTravelLength = 0;
+            
+            pixelPositions.forEach((pos, index) => {
+                // 移動到像素位置 (無擠出)
+                const travelLength = Math.sqrt(
+                    Math.pow(pos.x - lastPosition.x, 2) + 
+                    Math.pow(pos.y - lastPosition.y, 2)
+                );
+                
+                pathSegments.push({
+                    type: 'travel',
+                    start: { ...lastPosition },
+                    end: { ...pos },
+                    length: travelLength
+                });
+                
+                totalTravelLength += travelLength;
+                
+                // 列印像素
+                if (printStyle === 'solid') {
+                    // 實心方塊 - 輪廓
+                    const contourLength = pixelSize * 4;
+                    pathSegments.push({
+                        type: 'contour',
+                        start: { x: pos.x, y: pos.y },
+                        points: [
+                            { x: pos.x + pixelSize, y: pos.y },
+                            { x: pos.x + pixelSize, y: pos.y + pixelSize },
+                            { x: pos.x, y: pos.y + pixelSize },
+                            { x: pos.x, y: pos.y }
+                        ],
+                        length: contourLength
+                    });
+                    
+                    // 實心填充 - 橫線
+                    const fillSpacing = 0.4;
+                    const fillLines = Math.floor(pixelSize / fillSpacing);
+                    
+                    for (let line = 1; line < fillLines; line++) {
+                        const fillY = pos.y + line * fillSpacing;
+                        pathSegments.push({
+                            type: 'fill',
+                            start: { x: pos.x, y: fillY },
+                            end: { x: pos.x + pixelSize, y: fillY },
+                            length: pixelSize
+                        });
+                        totalPathLength += pixelSize;
+                    }
+                    
+                    totalPathLength += contourLength;
+                } else {
+                    // 空心方塊 - 只畫輪廓
+                    const contourLength = pixelSize * 4;
+                    pathSegments.push({
+                        type: 'contour',
+                        start: { x: pos.x, y: pos.y },
+                        points: [
+                            { x: pos.x + pixelSize, y: pos.y },
+                            { x: pos.x + pixelSize, y: pos.y + pixelSize },
+                            { x: pos.x, y: pos.y + pixelSize },
+                            { x: pos.x, y: pos.y }
+                        ],
+                        length: contourLength
+                    });
+                    totalPathLength += contourLength;
+                }
+                
+                lastPosition = { x: pos.x, y: pos.y };
+            });
+            
+            // 更新統計資訊
+            document.getElementById('pathLength').textContent = totalPathLength.toFixed(1);
+            document.getElementById('travelLength').textContent = totalTravelLength.toFixed(1);
+            document.getElementById('retractCount').textContent = pixelPositions.length;
+            
+            return pathSegments;
+        }
+        
+        // 繪製路徑（帶縮放和平移，修正Y軸方向）
+        function drawPath(showAnimation = false) {
+            const canvas = initCanvas();
+            const ctx = canvas.getContext('2d');
+            
+            // 清除Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 繪製背景
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 儲存當前畫布狀態
+            ctx.save();
+            
+            // 應用縮放和平移變換
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(zoom, zoom);
+            ctx.translate(offsetX, offsetY);
+            
+            // 繪製網格
+            drawGrid(ctx);
+            
+            // 繪製像素位置
+            drawPixels(ctx);
+            
+            // 繪製路徑
+            if (showAnimation && isPathPlaying) {
+                // 繪製已播放的路徑
+                for (let i = 0; i <= currentSegment && i < pathSegments.length; i++) {
+                    drawPathSegment(ctx, pathSegments[i], i);
+                }
+            } else {
+                // 繪製所有路徑
+                pathSegments.forEach((segment, index) => {
+                    drawPathSegment(ctx, segment, index);
+                });
+            }
+            
+            // 繪製座標軸
+            drawAxes(ctx);
+            
+            // 還原畫布狀態
+            ctx.restore();
+            
+            // 更新縮放顯示
+            document.getElementById('zoomLevel').textContent = `${Math.round(zoom * 100)}%`;
+        }
+        
+        // 繪製網格
+        function drawGrid(ctx) {
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 0.5;
+            
+            const gridSize = 20;
+            const range = 400; // 網格範圍
+            
+            // 垂直線
+            for (let x = -range; x <= range; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, -range);
+                ctx.lineTo(x, range);
+                ctx.stroke();
+            }
+            
+            // 水平線
+            for (let y = -range; y <= range; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(-range, y);
+                ctx.lineTo(range, y);
+                ctx.stroke();
+            }
+        }
+        
+        // 繪製座標軸
+        function drawAxes(ctx) {
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            
+            // X軸
+            ctx.beginPath();
+            ctx.moveTo(-400, 0);
+            ctx.lineTo(400, 0);
+            ctx.stroke();
+            
+            // Y軸
+            ctx.beginPath();
+            ctx.moveTo(0, -400);
+            ctx.lineTo(0, 400);
+            ctx.stroke();
+            
+            // 座標軸箭頭
+            ctx.fillStyle = '#666';
+            
+            // X軸箭頭
+            ctx.beginPath();
+            ctx.moveTo(395, -5);
+            ctx.lineTo(400, 0);
+            ctx.lineTo(395, 5);
+            ctx.fill();
+            
+            // Y軸箭頭
+            ctx.beginPath();
+            ctx.moveTo(-5, -395);
+            ctx.lineTo(0, -400);
+            ctx.lineTo(5, -395);
+            ctx.fill();
+        }
+        
+        // 繪製像素位置（修正Y軸方向）
+        function drawPixels(ctx) {
+            const text = document.getElementById('textInput').value;
+            const pixelSize = parseFloat(document.getElementById('pixelSize').value);
+            let xOffset = 50;
+            let yOffset = 50;
+            
+            ctx.fillStyle = 'rgba(76, 175, 80, 0.3)';
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 1;
+            
+            for (let charIndex = 0; charIndex < text.length; charIndex++) {
+                const char = text[charIndex];
+                const charKey = char.toUpperCase() === char && char.toLowerCase() !== char ? 
+                              char.toUpperCase() : char;
+                
+                if (charMap[charKey]) {
+                    const charX = xOffset;
+                    
+                    for (let row = 0; row < 7; row++) {
+                        for (let col = 0; col < 7; col++) {
+                            if (charMap[charKey][row][col] === 1) {
+                                const x = charX + col * pixelSize;
+                                const y = yOffset + row * pixelSize; // 正常Y軸方向（從上往下）
+                                
+                                // 繪製像素方塊
+                                ctx.fillRect(x, y, pixelSize, pixelSize);
+                                ctx.strokeRect(x, y, pixelSize, pixelSize);
+                            }
+                        }
+                    }
+                    xOffset += 8 * pixelSize;
+                }
+            }
+        }
+        
+        // 繪製單一路徑段
+        function drawPathSegment(ctx, segment, index) {
+            // 設定顏色和樣式
+            switch(segment.type) {
+                case 'travel':
+                    ctx.strokeStyle = '#ff5252';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    break;
+                case 'contour':
+                    ctx.strokeStyle = '#2196F3';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([]);
+                    break;
+                case 'fill':
+                    ctx.strokeStyle = '#ff9800';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([]);
+                    break;
+            }
+            
+            // 如果是當前播放的段，高亮顯示
+            if (isPathPlaying && index === currentSegment) {
+                ctx.strokeStyle = '#FFEB3B';
+                ctx.lineWidth = 3;
+            }
+            
+            // 繪製路徑
+            ctx.beginPath();
+            
+            if (segment.type === 'contour') {
+                // 繪製輪廓
+                ctx.moveTo(segment.start.x, segment.start.y);
+                segment.points.forEach(point => {
+                    ctx.lineTo(point.x, point.y);
+                });
+                ctx.closePath();
+            } else {
+                // 繪製直線
+                ctx.moveTo(segment.start.x, segment.start.y);
+                ctx.lineTo(segment.end.x, segment.end.y);
+            }
+            
+            ctx.stroke();
+            
+            // 繪製起點和終點
+            if (segment.type === 'travel' || index === 0) {
+                // 起點
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                ctx.arc(segment.start.x, segment.start.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 終點
+                ctx.fillStyle = '#ff5252';
+                ctx.beginPath();
+                ctx.arc(segment.end.x, segment.end.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // 重置線條樣式
+            ctx.setLineDash([]);
+        }
+        
+        // 縮放功能
+        function zoomIn() {
+            zoom *= 1.2;
+            drawPath();
+        }
+        
+        function zoomOut() {
+            zoom /= 1.2;
+            if (zoom < 0.1) zoom = 0.1;
+            drawPath();
+        }
+        
+        function resetView() {
+            zoom = 1.0;
+            offsetX = 0;
+            offsetY = 0;
+            drawPath();
+        }
+        
+        // 滑鼠事件處理
+        function setupMouseEvents() {
+            const container = document.getElementById('pathContainer');
+            const canvas = document.getElementById('pathCanvas');
+            
+            // 滑鼠滾輪縮放
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                
+                const rect = container.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // 計算相對於畫布中心的座標
+                const worldX = (mouseX - canvas.width / 2) / zoom - offsetX;
+                const worldY = (mouseY - canvas.height / 2) / zoom - offsetY;
+                
+                // 應用縮放
+                const zoomFactor = e.deltaY > 0 ? 0.8 : 1.25;
+                zoom *= zoomFactor;
+                if (zoom < 0.1) zoom = 0.1;
+                if (zoom > 10) zoom = 10;
+                
+                // 調整偏移以保持滑鼠位置不變
+                offsetX = (mouseX - canvas.width / 2) / zoom - worldX;
+                offsetY = (mouseY - canvas.height / 2) / zoom - worldY;
+                
+                drawPath();
+            });
+            
+            // 滑鼠拖曳平移
+            container.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // 左鍵
+                    isDragging = true;
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                    container.style.cursor = 'grabbing';
+                }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - lastMouseX;
+                    const deltaY = e.clientY - lastMouseY;
+                    
+                    offsetX += deltaX / zoom;
+                    offsetY += deltaY / zoom;
+                    
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                    
+                    drawPath();
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    container.style.cursor = 'grab';
+                }
+            });
+            
+            // 防止拖曳時選擇文字
+            container.addEventListener('selectstart', (e) => {
+                if (isDragging) e.preventDefault();
+            });
+        }
+        
+        // 播放路徑動畫
+        function playPathAnimation() {
+            if (isPathPlaying) return;
+            
+            isPathPlaying = true;
+            currentSegment = 0;
+            
+            function animate() {
+                if (!isPathPlaying || currentSegment >= pathSegments.length) {
+                    isPathPlaying = false;
+                    return;
+                }
+                
+                drawPath(true);
+                currentSegment++;
+                
+                setTimeout(animate, 100);
+            }
+            
+            animate();
+        }
+        
+        // 暫停路徑動畫
+        function pausePathAnimation() {
+            isPathPlaying = false;
+        }
+        
+        // 重設路徑動畫
+        function resetPathAnimation() {
+            isPathPlaying = false;
+            currentSegment = 0;
+            drawPath();
+        }
+        
+        // 修正Y軸方向的G-code生成
+        function generateGcode() {
+            const text = document.getElementById('textInput').value;
+            const pixelSize = parseFloat(document.getElementById('pixelSize').value);
+            const blockHeight = parseFloat(document.getElementById('blockHeight').value);
+            const printStyle = document.getElementById('printStyle').value;
+            
+            // 固定參數設定
+            const NOZZLE_DIAMETER = 0.4;
+            const FILAMENT_DIAMETER = 1.75;
+            const LAYER_HEIGHT = 0.2;
+            const FIRST_LAYER_HEIGHT = 0.3;
+            const LINE_WIDTH = 0.4;
+            const PRINT_SPEED = 60;
+            const TRAVEL_SPEED = 120;
+            const FIRST_LAYER_SPEED = 30;
+            const NOZZLE_TEMP = 210;
+            const BED_TEMP = 60;
+            const RETRACT_DISTANCE = 1.0;
+            const RETRACT_SPEED = 45;
+            
+            // 計算層數
+            const totalLayers = Math.ceil(blockHeight / LAYER_HEIGHT);
+            const firstLayer = FIRST_LAYER_HEIGHT > 0 ? 1 : 0;
+            const normalLayers = totalLayers - firstLayer;
+            
+            // 計算擠出量函數
+            const calculateExtrusion = (length, layerHeight, lineWidth = LINE_WIDTH) => {
+                const crossSection = layerHeight * lineWidth;
+                const volume = crossSection * length;
+                const filamentCrossSection = Math.PI * Math.pow(FILAMENT_DIAMETER / 2, 2);
+                return volume / filamentCrossSection;
+            };
+            
+            // 生成G-code頭部
+            let gcode = `; 7x7像素文字 - 可直接列印版本
+; 文字: ${text}
+; 像素尺寸: ${pixelSize}mm
+; 厚度: ${blockHeight}mm (${totalLayers}層)
+; 列印樣式: ${printStyle === 'solid' ? '實心' : '空心'}
+; 噴嘴直徑: ${NOZZLE_DIAMETER}mm
+; 線材直徑: ${FILAMENT_DIAMETER}mm
+; 層高: ${LAYER_HEIGHT}mm
+; 第一層高度: ${FIRST_LAYER_HEIGHT}mm
+; 生成時間: ${new Date().toLocaleString()}
+
+; ============ 初始化設定 ============
+G21 ; 毫米單位
+G90 ; 絕對座標
+M82 ; 絕對擠出模式
+M140 S${BED_TEMP} ; 設定熱床溫度
+M104 S${NOZZLE_TEMP} ; 設定噴頭溫度
+M190 S${BED_TEMP} ; 等待熱床達到溫度
+M109 S${NOZZLE_TEMP} ; 等待噴頭達到溫度
+G28 ; 所有軸歸零
+G92 E0 ; 重置擠出機
+M83 ; 相對擠出模式
+
+; ============ 清潔噴嘴 ============
+G1 Z10 F${TRAVEL_SPEED * 60}
+G1 X5 Y5 F${TRAVEL_SPEED * 60}
+G1 Z0.2 F${TRAVEL_SPEED * 60}
+G1 E3 F60 ; 擠出3mm清理噴嘴
+G92 E0 ; 重置擠出機
+G1 Z10 F${TRAVEL_SPEED * 60}
+
+; ============ 開始列印 ============
+
+`;
+            
+            // 計算所有像素的位置（與2D預覽一致的Y軸方向）
+            let pixelPositions = [];
+            let xOffset = 20;
+            let yOffset = 20;
+            
+            for (let charIndex = 0; charIndex < text.length; charIndex++) {
+                const char = text[charIndex];
+                const charKey = char.toUpperCase() === char && char.toLowerCase() !== char ? 
+                              char.toUpperCase() : char;
+                
+                if (charMap[charKey]) {
+                    const charX = xOffset;
+                    
+                    for (let row = 0; row < 7; row++) {
+                        for (let col = 0; col < 7; col++) {
+                            if (charMap[charKey][row][col] === 1) {
+                                const x = charX + col * pixelSize;
+                                const y = yOffset + row * pixelSize; // 與2D預覽一致的Y軸方向
+                                pixelPositions.push({ x, y });
+                            }
+                        }
+                    }
+                    xOffset += 8 * pixelSize;
+                }
+            }
+            
+            // 列印第一層
+            if (firstLayer > 0) {
+                gcode += `; ============ 第一層 ============\n`;
+                gcode += `G1 Z${FIRST_LAYER_HEIGHT.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
+                
+                for (let i = 0; i < pixelPositions.length; i++) {
+                    const pos = pixelPositions[i];
+                    
+                    // 移動到像素位置
+                    gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} F${TRAVEL_SPEED * 60}\n`;
+                    
+                    if (printStyle === 'solid') {
+                        // 實心方塊
+                        const perimeterLength = pixelSize * 4;
+                        const perimeterExtrusion = calculateExtrusion(perimeterLength, FIRST_LAYER_HEIGHT);
+                        
+                        gcode += `G1 E${perimeterExtrusion.toFixed(4)} F${RETRACT_SPEED * 60}\n`;
+                        
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)} F${FIRST_LAYER_SPEED * 60}\n`;
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${perimeterExtrusion.toFixed(4)}\n`;
+                        
+                        // 填充
+                        const fillSpacing = 0.4;
+                        const fillLines = Math.floor(pixelSize / fillSpacing);
+                        
+                        for (let line = 1; line < fillLines; line++) {
+                            const fillY = pos.y + line * fillSpacing;
+                            const fillExtrusion = calculateExtrusion(pixelSize, FIRST_LAYER_HEIGHT);
+                            
+                            gcode += `G1 X${pos.x.toFixed(2)} Y${fillY.toFixed(2)} E0\n`;
+                            gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${fillY.toFixed(2)} E${fillExtrusion.toFixed(4)}\n`;
+                        }
+                    } else {
+                        // 空心方塊
+                        const perimeterLength = pixelSize * 4;
+                        const extrusionAmount = calculateExtrusion(perimeterLength, FIRST_LAYER_HEIGHT);
+                        
+                        gcode += `G1 E${extrusionAmount.toFixed(4)} F${RETRACT_SPEED * 60}\n`;
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${pos.y.toFixed(2)} E${extrusionAmount.toFixed(4)} F${FIRST_LAYER_SPEED * 60}\n`;
+                        gcode += `G1 X${(pos.x + pixelSize).toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${(pos.y + pixelSize).toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                        gcode += `G1 X${pos.x.toFixed(2)} Y${pos.y.toFixed(2)} E${extrusionAmount.toFixed(4)}\n`;
+                    }
+                    
+                    // 回抽
+                    gcode += `G1 E-${RETRACT_DISTANCE} F${RETRACT_SPEED * 60}\n`;
+                    gcode += `G1 Z${(FIRST_LAYER_HEIGHT + 0.5).toFixed(2)} F${TRAVEL_SPEED * 60}\n\n`;
+                }
+            }
+            
+            // 列印完成
+            gcode += `; ============ 列印完成 ============
+G1 Z20 F${TRAVEL_SPEED * 60}
+G28 X Y
+M104 S0
+M140 S0
+M107
+M84
+M30
+`;
+            
+            return gcode;
+        }
+        
+        // 顯示字型預覽
+        function showFontPreview() {
+            const text = document.getElementById('textInput').value;
+            const previewContainer = document.getElementById('pixelPreview');
+            const previewArea = document.querySelector('.preview-area');
+            
+            if (!text || text.trim() === '') {
+                previewContainer.innerHTML = '<div class="empty-message">輸入文字以顯示預覽</div>';
+                previewContainer.style.width = 'auto';
+                return;
+            }
+            
+            previewContainer.innerHTML = '';
+            
+            const previewWidth = previewArea.clientWidth - 40;
+            const charCount = text.length;
+            const charSpacing = 10;
+            const maxPixelSize = 30;
+            const minPixelSize = 8;
+            
+            const requiredSpacing = (charCount - 1) * charSpacing;
+            let pixelSize = Math.floor((previewWidth - requiredSpacing - 10) / (charCount * 7));
+            pixelSize = Math.max(minPixelSize, Math.min(maxPixelSize, pixelSize));
+            
+            for (let charIndex = 0; charIndex < text.length; charIndex++) {
+                const char = text[charIndex];
+                const charKey = char.toUpperCase() === char && char.toLowerCase() !== char ? 
+                              char.toUpperCase() : char;
+                
+                const charContainer = document.createElement('div');
+                charContainer.className = 'char-preview';
+                charContainer.style.marginRight = charIndex < text.length - 1 ? `${charSpacing}px` : '0';
+                
+                const pixelGrid = document.createElement('div');
+                pixelGrid.className = 'pixel-grid';
+                pixelGrid.style.gridTemplateColumns = `repeat(7, ${pixelSize}px)`;
+                pixelGrid.style.gridTemplateRows = `repeat(7, ${pixelSize}px)`;
+                pixelGrid.style.gap = '1px';
+                
+                if (charMap[charKey]) {
+                    for (let row = 0; row < 7; row++) {
+                        for (let col = 0; col < 7; col++) {
+                            const pixelCell = document.createElement('div');
+                            pixelCell.className = 'pixel-cell';
+                            pixelCell.style.width = `${pixelSize}px`;
+                            pixelCell.style.height = `${pixelSize}px`;
+                            
+                            if (charMap[charKey][row][col] === 1) {
+                                pixelCell.classList.add('active');
+                            }
+                            
+                            pixelGrid.appendChild(pixelCell);
+                        }
+                    }
+                } else {
+                    // 如果是未定義字元，顯示空白網格
+                    for (let i = 0; i < 49; i++) {
+                        const pixelCell = document.createElement('div');
+                        pixelCell.className = 'pixel-cell';
+                        pixelCell.style.width = `${pixelSize}px`;
+                        pixelCell.style.height = `${pixelSize}px`;
+                        pixelGrid.appendChild(pixelCell);
+                    }
+                }
+                
+                charContainer.appendChild(pixelGrid);
+                
+                const charLabel = document.createElement('p');
+                charLabel.textContent = `"${char}"`;
+                charContainer.appendChild(charLabel);
+                
+                previewContainer.appendChild(charContainer);
+            }
+            
+            const totalWidth = (charCount * 7 * pixelSize) + requiredSpacing;
+            previewContainer.style.width = `${Math.min(totalWidth, previewWidth - 10)}px`;
+        }
+
+        // 顯示複製成功訊息
+        function showCopyMessage() {
+            const message = document.getElementById('copyMessage');
+            message.classList.add('show');
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 3000);
+        }
+
+        // 複製 G-code 到剪貼簿
+        function copyGcode() {
+            const text = document.getElementById('textInput').value;
+            if (!text || text.trim() === '') {
+                alert('請輸入有效的文字！');
+                return;
+            }
+            
+            const gcode = generateGcode();
+            
+            // 使用Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(gcode)
+                    .then(() => {
+                        showCopyMessage();
+                    })
+                    .catch(err => {
+                        console.error('複製失敗:', err);
+                        copyFallback(gcode);
+                    });
+            } else {
+                copyFallback(gcode);
+            }
+        }
+
+        // 降級複製方法
+        function copyFallback(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-999999px';
+            textarea.style.top = '-999999px';
+            document.body.appendChild(textarea);
+            
+            textarea.focus();
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopyMessage();
+                } else {
+                    alert('無法複製到剪貼簿，請手動複製生成的G-code');
+                }
+            } catch (err) {
+                console.error('降級複製失敗:', err);
+                alert('複製失敗，請手動複製生成的文字');
+            }
+            
+            document.body.removeChild(textarea);
+        }
+
+        // 下載 G-code 檔案
+        function downloadGcode() {
+            const text = document.getElementById('textInput').value;
+            if (!text || text.trim() === '') {
+                alert('請輸入有效的文字！');
+                return;
+            }
+            
+            const gcode = generateGcode();
+            const cleanText = text.replace(/[^a-zA-Z0-9]/g, '_');
+            const blob = new Blob([gcode], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `7x7_pixel_${cleanText}.gcode`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化Canvas
+            initCanvas();
+            
+            // 設定滑鼠事件
+            setupMouseEvents();
+            
+            // 事件監聽器
+            document.getElementById('copyBtn').addEventListener('click', copyGcode);
+            document.getElementById('downloadBtn').addEventListener('click', downloadGcode);
+            
+            // 路徑控制按鈕
+            document.getElementById('generatePathBtn').addEventListener('click', () => {
+                calculatePath();
+                drawPath();
+            });
+            
+            document.getElementById('playPathBtn').addEventListener('click', playPathAnimation);
+            document.getElementById('pausePathBtn').addEventListener('click', pausePathAnimation);
+            document.getElementById('resetPathBtn').addEventListener('click', resetPathAnimation);
+            
+            // 縮放控制按鈕
+            document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+            document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+            document.getElementById('resetViewBtn').addEventListener('click', resetView);
+            
+            // 快速範例按鈕
+            document.querySelectorAll('.char-buttons button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const char = e.target.dataset.char;
+                    document.getElementById('textInput').value = char;
+                    showFontPreview();
+                    // 自動計算路徑
+                    setTimeout(() => {
+                        calculatePath();
+                        drawPath();
+                    }, 100);
+                });
+            });
+            
+            // 輸入變化時更新預覽
+            document.getElementById('textInput').addEventListener('input', showFontPreview);
+            document.getElementById('pixelSize').addEventListener('change', showFontPreview);
+            document.getElementById('blockHeight').addEventListener('change', showFontPreview);
+            document.getElementById('printStyle').addEventListener('change', showFontPreview);
+            
+            // 視窗大小變化時重新計算預覽
+            window.addEventListener('resize', () => {
+                showFontPreview();
+                drawPath();
+            });
+            
+            // 初始顯示預覽
+            showFontPreview();
+            
+            // 初始計算並繪製路徑
+            setTimeout(() => {
+                calculatePath();
+                drawPath();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
