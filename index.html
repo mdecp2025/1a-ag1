@@ -849,13 +849,17 @@ for (let row = 0; row < 7; row++) {
     for (let col = 0; col < 7; col++) {
         if (charMap[charKey][row][col] === 1) {
             const x = charX + col * pixelSize;
-            // 重要修正：將Y軸翻轉
             const y = yOffset + (6 - row) * pixelSize; // 使用 (6-row) 來翻轉Y軸
             pixelPositions.push({ x, y });
+                                ctx.fillRect(x, y, pixelSize, pixelSize);
+                                ctx.strokeRect(x, y, pixelSize, pixelSize);
+                            }
+                        }
+                    }
+                    xOffset += 8 * pixelSize;
+                }
+            }
         }
-    }
-}
-        
         // 繪製單一路徑段
         function drawPathSegment(ctx, segment, index) {
             // 設定顏色和樣式
