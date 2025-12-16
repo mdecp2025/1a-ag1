@@ -845,22 +845,16 @@
                 if (charMap[charKey]) {
                     const charX = xOffset;
                     
-                    for (let row = 0; row < 7; row++) {
-                        for (let col = 0; col < 7; col++) {
-                            if (charMap[charKey][row][col] === 1) {
-                                const x = charX + col * pixelSize;
-                                const y = yOffset + row * pixelSize; // 正常Y軸方向（從上往下）
-                                
-                                // 繪製像素方塊
-                                ctx.fillRect(x, y, pixelSize, pixelSize);
-                                ctx.strokeRect(x, y, pixelSize, pixelSize);
-                            }
-                        }
-                    }
-                    xOffset += 8 * pixelSize;
-                }
-            }
+for (let row = 0; row < 7; row++) {
+    for (let col = 0; col < 7; col++) {
+        if (charMap[charKey][row][col] === 1) {
+            const x = charX + col * pixelSize;
+            // 重要修正：將Y軸翻轉
+            const y = yOffset + (6 - row) * pixelSize; // 使用 (6-row) 來翻轉Y軸
+            pixelPositions.push({ x, y });
         }
+    }
+}
         
         // 繪製單一路徑段
         function drawPathSegment(ctx, segment, index) {
