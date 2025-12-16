@@ -112,41 +112,17 @@ Brython：以 Python 控制 DOM、Canvas、按鈕事件
 視覺化	使用 <canvas> 元素來實現 2D 列印路徑的繪製與即時互動預覽。
 
 #
-二、 運作原理與資料流
-整個運作流程是一個單向的資料流，從使用者輸入，經過核心運算，最終輸出結果。
+二、 運作原理與資料流這個應用程式的運作流程是一個清晰的單向數據流，從使用者輸入開始，經過一系列計算，最終產生 G-code 輸出：
 
-使用者輸入 (Input)：
+輸入觸發:使用者在文字框、尺寸或樣式下拉選單中進行任何變動（input 或 change 事件），都會立即觸發 showFontPreview() 函數。
 
-使用者在 <input id="textInput"> 輸入文字。
+解析與預覽:showFontPreview() 函數會查詢內建的 charMap（7x7 像素字型數據庫），將輸入文字轉換為二進位點陣圖。同時，它會更新網頁上的像素預覽圖。
 
-使用者調整參數，如 pixelSize（像素尺寸）和 blockHeight（列印高度）。
+計算路徑:預覽完成後，系統會呼叫 calculatePath() 函數。這個函數依據使用者設定的 pixelSize 和 printStyle（實心或空心），計算出機器需要移動的所有 $X, Y, Z$ 座標點，並儲存為路徑數據陣列 (pathData)。
 
-觸發核心函數：
+視覺化呈現:drawPath() 函數讀取 pathData，使用 Canvas API 將這些計算出的路徑點繪製出來，提供即時的 2D 俯視圖預覽，讓使用者可以檢查路徑是否正確。
 
-所有輸入變更都會觸發 showFontPreview() 函數。
-
-字型解析與預覽：
-
-showFontPreview() 根據輸入文字查閱 charMap，計算出每個字元實際的 7x7 像素 佈局。
-
-它同時更新 HTML 元素，將文字的像素化結果顯示出來。
-
-路徑計算 (Path Calculation)：
-
-預覽完成後，會異步觸發 calculatePath() 函數。
-
-此函數不生成 G-code，而是計算出 G-code 路徑中的所有 座標點 (X, Y, Z) 和 移動類型 (擠出/空跑)，並將這些路徑數據儲存在一個名為 pathData 的全域陣列中。
-
-視覺化呈現：
-
-drawPath() 函數讀取 pathData 陣列，並使用 Canvas API 將這些 2D 路徑繪製到畫布上，供使用者預覽。
-
-G-code 生成 (Output)：
-
-當使用者點擊「生成 G-code」按鈕時，觸發 generateGcode() 函數。
-
-此函數使用 pathData 中的座標信息和計算出的擠出量，結合 G-code 語法（例如 G0、G1、M104 等），生成最終的 G-code 文本。
-
+G-code 輸出:當使用者點擊「生成 G-code」按鈕時，generateGcode() 函數被執行。它結合路徑數據、分層邏輯、速度設定以及核心的擠出量計算，將所有的動作指令（如 G0、G1）組合成最終的 G-code 文本。
 #
 
 三、 核心邏輯 (Core Logic)
