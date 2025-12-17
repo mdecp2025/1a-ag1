@@ -92,7 +92,7 @@ Brython：以 Python 控制 DOM、Canvas、按鈕事件
 
 ##
 
-## 7X7 Lab  
+# 7X7 Lab  
 
 12/16
 <img width="1894" height="882" alt="image" src="https://github.com/user-attachments/assets/ba0ab088-bf22-432d-9f86-f5fcf8023f87" />
