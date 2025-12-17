@@ -99,6 +99,9 @@ Brython：以 Python 控制 DOM、Canvas、按鈕事件
 ##
 
 
+##  點擊 [此處打開模擬器](https://mdecp2025.github.io/1a-ag1/)
+
+
 ## ##  點擊 [此處打開介紹影片] (https://youtu.be/usFmvSHkH84)
 
 這個網頁程式是一個相當有趣、實用的小工具 ——
