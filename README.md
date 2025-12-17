@@ -8,7 +8,7 @@
 <img width="1247" height="846" alt="image" src="https://github.com/user-attachments/assets/36f4b46b-ed41-4c12-8d4b-5065b2bdf9bf" />
 
  
- ## 點擊 [此處打開模擬器] ]https://leceichen.github.io/Advanced-Brython-Letter-Dis
+ ## 點擊 [此處打開模擬器] (https://leceichen.github.io/Advanced-Brython-Letter-Dis)
 
 
 ##  Advanced Brython 字母顯示器功能
