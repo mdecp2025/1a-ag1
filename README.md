@@ -8,8 +8,6 @@
 <img width="1247" height="846" alt="image" src="https://github.com/user-attachments/assets/36f4b46b-ed41-4c12-8d4b-5065b2bdf9bf" />
 
  
- ## 點擊 [此處打開模擬器]  (https://leceichen.github.io/Advanced-Brython-Letter-Dis)
-
 
 ##  Advanced Brython 字母顯示器功能
 
@@ -102,7 +100,9 @@ Brython：以 Python 控制 DOM、Canvas、按鈕事件
 ##  點擊 [此處打開模擬器](https://mdecp2025.github.io/1a-ag1/)
 
 
-## ## 點擊 [此處打開介紹影片](https://youtu.be/usFmvSHkH84)
+## 
+
+## 點擊 [此處打開介紹影片](https://youtu.be/usFmvSHkH84)
 
 這個網頁程式是一個相當有趣、實用的小工具 ——
 它的名稱可以概括為 「7×7 像素文字 3D 列印生成器」。
