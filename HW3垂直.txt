@@ -1,0 +1,68 @@
+from brython_robot4 import init, load_scene_from_url, get_url_parameter
+from browser import aio
+
+# 機器人行為腳本
+async def robot_actions(robot):
+    print("開始執行機器人程式：垂直一柱柱往右採收胡蘿蔔。")
+
+    # 在 robot_actions 內定義輔助函式
+    async def move_n(n):
+        for _ in range(n):
+            await robot.move()
+
+    collected = 0
+    carrots_needed = 36
+
+    # 步驟1：從起始位置 (1,1) 移動到田地左下角 (3,3)，並面向北開始第一列
+    await move_n(2)          # 向東從 (1,1) → (3,1)
+    await robot.turn_left()  # 原本向東，左轉 → 北
+    await move_n(2)          # 向北從 (3,1) → (3,3)，現在在左下角，面向北
+
+    col = 0  # 已完成的列數 (0~5，共6列)
+
+    while collected < carrots_needed and col < 6:
+        # 收割當前這一列（走6格）
+        for i in range(6):
+            # 採收當前格的所有胡蘿蔔
+            while robot.background_is("pale_grass"):
+                robot.pick_carrot()
+                collected += 1
+                if collected >= carrots_needed:
+                    break
+            if collected >= carrots_needed:
+                break
+            # 最後一格不用再往前走
+            if i < 5:
+                await robot.move()
+
+        col += 1
+        if col >= 6 or collected >= carrots_needed:
+            break
+
+        # 準備下一列：根據目前方向決定怎麼轉向右移
+        if col % 2 == 1:  # 奇數列結束（第1、3、5列），目前在最上面 (y=8)，面向北
+            await robot.turn_right()  # 北 → 東
+            await robot.move()        # 右移一格
+            await robot.turn_right()  # 東 → 南，準備向下收割
+        else:  # 偶數列結束（第2、4列），目前在最下面 (y=3)，面向南
+            await robot.turn_left()   # 南 → 東
+            await robot.move()        # 右移一格
+            await robot.turn_left()   # 東 → 北，準備向上收割
+
+    print("所有胡蘿蔔已採收完畢！")
+    print(f"程式執行完畢。總共採收了 {collected} 個胡蘿蔔。")
+
+# 程式啟動點
+async def main():
+    world_url = get_url_parameter('world')
+    if world_url:
+        scene_data = await load_scene_from_url(world_url)
+        world, robot = init(scene_data, robot_config={"max_carrots": 50})
+    else:
+        world, robot = init(robot_config={"max_carrots": 50})
+
+    if robot:
+        await robot_actions(robot)
+
+# 啟動主程式
+aio.run(main())
