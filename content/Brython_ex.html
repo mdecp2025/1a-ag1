@@ -131,7 +131,7 @@ img.add_border {
                             <li><a href="./../blog/index.html">blog</a></li>
                         </ul>
                       </li>
-                     <li><a href='About.html'>About</a><li class='has-children'><a href='Reeborg.html'>Reeborg</a><ul class='dropdown'><li><a href='ex1.html'>ex1</a><li><a href='Otto_ninja.html'>Otto_ninja</a></li></ul><li class='has-children'><a href='Brython.html'>Brython</a><ul class='dropdown'><li><a href='Brython_ex.html'>Brython_ex</a></li></ul><li class='has-children'><a href='Pyodide.html'>Pyodide</a><ul class='dropdown'><li><a href='Pyodide_ex.html'>Pyodide_ex</a></li>
+                     <li><a href='關於.html'>關於</a><li class='has-children'><a href='銳博.html'>銳博</a><ul class='dropdown'><li><a href='例1.html'>例1</a><li><a href='Otto_ninja.html'>Otto_ninja</a></li></ul><li class='has-children'><a href='Brython.html'>Brython</a><ul class='dropdown'><li><a href='Brython_ex.html'>Brython_ex</a></li></ul><li class='has-children'><a href='派奧迪德.html'>派奧迪德</a><ul class='dropdown'><li><a href='Pyodide_ex.html'>Pyodide_ex</a></li>
                       </ul>
                 </nav>
               </div>
@@ -142,137 +142,137 @@ img.add_border {
           </div>
           
         </header>
-    <div id="tipue_search_content">Brython << <a href='Brython.html'>Previous</a> <a href='Pyodide.html'>Next</a> >> Pyodide<br /><h1>Brython_ex</h1>
+    <div id="tipue_search_content">Brython << <a href='Brython.html'>Previous</a> <a href='派奧迪德.html'>Next</a> >> 派奧迪德<br /><h1>Brython_ex</h1>
 <p><a href="https://mde.tw/cp2025/content/Brython.html?src=https://gist.githubusercontent.com/mdecycu/ec4bb35dd0769e7a83d2a9fa57878a67/raw/9d55811467e411eb89f74171d8a586ae9f1a96aa/brython_robot_free_walk.py">機器人自由行</a></p>
 <p>Can we bring pythonpad into this page? <a href="https://pythonpad.github.io/docs/manual.html">https://pythonpad.github.io/docs/manual.html</a> </p>
-<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, html, timer
- 
-canvas = html.CANVAS(width=400, height=400)
-brython_div = document["brython_div1"]
-brython_div &lt;= canvas
-ctx = canvas.getContext("2d")
- 
-def draw_grid():
-    ctx.clearRect(0, 0, 400, 400)
-    ctx.strokeStyle = "#ccc"
-    ctx.lineWidth = 1
-    for i in range(0, 401, 40):
-        ctx.beginPath()
-        ctx.moveTo(i, 0)
-        ctx.lineTo(i, 400)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(0, i)
-        ctx.lineTo(400, i)
-        ctx.stroke()
-    
-    # 畫出邊界
-    ctx.strokeStyle = "black"
-    ctx.lineWidth = 2
-    ctx.strokeRect(0, 0, 400, 400)
-
-def draw_robot(x, y):
-    draw_grid()
-    ctx.fillStyle = "blue"
-    ctx.beginPath()
-    ctx.arc(x * 40 + 20, y * 40 + 20, 15, 0, 6.28)
-    ctx.fill()
-
-x, y = 0, 0
-def move():
-    global x
-    x = (x + 1) % 10
-    draw_robot(x, y)
-
-draw_grid()
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, html, timer<span></span>
+ <span></span>
+canvas = html.CANVAS(width=400, height=400)<span></span>
+brython_div = document["brython_div1"]<span></span>
+brython_div &lt;= canvas<span></span>
+ctx = canvas.getContext("2d")<span></span>
+ <span></span>
+def draw_grid():<span></span>
+    ctx.clearRect(0, 0, 400, 400)<span></span>
+    ctx.strokeStyle = "#ccc"<span></span>
+    ctx.lineWidth = 1<span></span>
+    for i in range(0, 401, 40):<span></span>
+        ctx.beginPath()<span></span>
+        ctx.moveTo(i, 0)<span></span>
+        ctx.lineTo(i, 400)<span></span>
+        ctx.stroke()<span></span>
+        ctx.beginPath()<span></span>
+        ctx.moveTo(0, i)<span></span>
+        ctx.lineTo(400, i)<span></span>
+        ctx.stroke()<span></span>
+    <span></span>
+    # 畫出邊界<span></span>
+    ctx.strokeStyle = "black"<span></span>
+    ctx.lineWidth = 2<span></span>
+    ctx.strokeRect(0, 0, 400, 400)<span></span>
+<span></span>
+def draw_robot(x, y):<span></span>
+    draw_grid()<span></span>
+    ctx.fillStyle = "blue"<span></span>
+    ctx.beginPath()<span></span>
+    ctx.arc(x * 40 + 20, y * 40 + 20, 15, 0, 6.28)<span></span>
+    ctx.fill()<span></span>
+<span></span>
+x, y = 0, 0<span></span>
+def move():<span></span>
+    global x<span></span>
+    x = (x + 1) % 10<span></span>
+    draw_robot(x, y)<span></span>
+<span></span>
+draw_grid()<span></span>
 timer.set_interval(move, 500)</pre>
 <p>以下程式, 按 j 隨箭頭方向前進, 按下 i 則左轉</p>
-<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, html, bind
-
-canvas = html.CANVAS(width=400, height=400)
-brython_div = document["brython_div1"]
-brython_div &lt;= canvas
-ctx = canvas.getContext("2d")
-
-cols, rows = 10, 10
-cell = 40
-
-# 上、右、下、左
-directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
-
-robot = {
-    "x": 5,
-    "y": 5,
-    "dir": 0  # 初始朝向上
-}
-
-def draw_grid():
-    ctx.clearRect(0, 0, 400, 400)
-    ctx.strokeStyle = "#ccc"
-    ctx.lineWidth = 1
-    for i in range(0, 401, cell):
-        ctx.beginPath()
-        ctx.moveTo(i, 0)
-        ctx.lineTo(i, 400)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(0, i)
-        ctx.lineTo(400, i)
-        ctx.stroke()
-    ctx.strokeStyle = "black"
-    ctx.lineWidth = 2
-    ctx.strokeRect(0, 0, 400, 400)
-
-def draw_robot():
-    draw_grid()
-    cx = robot["x"] * cell + cell // 2
-    cy = robot["y"] * cell + cell // 2
-    size = 15
-    d = robot["dir"]
-
-    ctx.fillStyle = "blue"
-    ctx.beginPath()
-    if d == 0:  # 上
-        ctx.moveTo(cx, cy - size)
-        ctx.lineTo(cx - size, cy + size)
-        ctx.lineTo(cx + size, cy + size)
-    elif d == 1:  # 右
-        ctx.moveTo(cx + size, cy)
-        ctx.lineTo(cx - size, cy - size)
-        ctx.lineTo(cx - size, cy + size)
-    elif d == 2:  # 下
-        ctx.moveTo(cx, cy + size)
-        ctx.lineTo(cx - size, cy - size)
-        ctx.lineTo(cx + size, cy - size)
-    elif d == 3:  # 左
-        ctx.moveTo(cx - size, cy)
-        ctx.lineTo(cx + size, cy - size)
-        ctx.lineTo(cx + size, cy + size)
-    ctx.closePath()
-    ctx.fill()
-
-@bind(document, "keydown")
-def on_key(e):
-    key = e.key.lower()
-    if key == "i":
-        robot["dir"] = (robot["dir"] - 1) % 4  # 左轉
-    elif key == "j":
-        dx, dy = directions[robot["dir"]]
-        nx = robot["x"] + dx
-        ny = robot["y"] + dy
-        if 0 &lt;= nx &lt; cols and 0 &lt;= ny &lt; rows:
-            robot["x"] = nx
-            robot["y"] = ny
-    draw_robot()
-
-draw_robot()</pre>
-<p>Optimization:</p>
-<p>題目:<br/>一位製造商想設計一個開口式的盒子，其底部為長方形，寬為 x、長為 y，且總表面積為 80 平方公分。 請問要使盒子的體積達到最大，應該選用哪些尺寸？</p>
-<p>直接利用 Python 以 <a href="https://en.wikipedia.org/wiki/Differential_evolution">Differential Evoluation</a> 運算: <a href="./../downloads/de_volume_max.py">de_volume_max.py</a></p>
-<p style="padding-left: 30px;">參考: </p>
-<p style="padding-left: 60px;"><a href="./../downloads/de_volume_max.c">de_volume_max.c</a>, <a href="./../downloads/de_volume_max.v">de_volume_max.v</a></p>
-<p>也可以採網頁前端使用 Brython，後端採 Python 執行運算後將資料傳回網頁: <a href="./../downloads/brython_w_flask.7z">brython_w_flask.7z</a></p>
-<br />Brython << <a href='Brython.html'>Previous</a> <a href='Pyodide.html'>Next</a> >> Pyodide</div>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, html, bind<span></span>
+<span></span>
+canvas = html.CANVAS(width=400, height=400)<span></span>
+brython_div = document["brython_div1"]<span></span>
+brython_div &lt;= canvas<span></span>
+ctx = canvas.getContext("2d")<span></span>
+<span></span>
+cols, rows = 10, 10<span></span>
+cell = 40<span></span>
+<span></span>
+# 上、右、下、左<span></span>
+directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]<span></span>
+<span></span>
+robot = {<span></span>
+    "x": 5,<span></span>
+    "y": 5,<span></span>
+    "dir": 0  # 初始朝向上<span></span>
+}<span></span>
+<span></span>
+def draw_grid():<span></span>
+    ctx.clearRect(0, 0, 400, 400)<span></span>
+    ctx.strokeStyle = "#ccc"<span></span>
+    ctx.lineWidth = 1<span></span>
+    for i in range(0, 401, cell):<span></span>
+        ctx.beginPath()<span></span>
+        ctx.moveTo(i, 0)<span></span>
+        ctx.lineTo(i, 400)<span></span>
+        ctx.stroke()<span></span>
+        ctx.beginPath()<span></span>
+        ctx.moveTo(0, i)<span></span>
+        ctx.lineTo(400, i)<span></span>
+        ctx.stroke()<span></span>
+    ctx.strokeStyle = "black"<span></span>
+    ctx.lineWidth = 2<span></span>
+    ctx.strokeRect(0, 0, 400, 400)<span></span>
+<span></span>
+def draw_robot():<span></span>
+    draw_grid()<span></span>
+    cx = robot["x"] * cell + cell // 2<span></span>
+    cy = robot["y"] * cell + cell // 2<span></span>
+    size = 15<span></span>
+    d = robot["dir"]<span></span>
+<span></span>
+    ctx.fillStyle = "blue"<span></span>
+    ctx.beginPath()<span></span>
+    if d == 0:  # 上<span></span>
+        ctx.moveTo(cx, cy - size)<span></span>
+        ctx.lineTo(cx - size, cy + size)<span></span>
+        ctx.lineTo(cx + size, cy + size)<span></span>
+    elif d == 1:  # 右<span></span>
+        ctx.moveTo(cx + size, cy)<span></span>
+        ctx.lineTo(cx - size, cy - size)<span></span>
+        ctx.lineTo(cx - size, cy + size)<span></span>
+    elif d == 2:  # 下<span></span>
+        ctx.moveTo(cx, cy + size)<span></span>
+        ctx.lineTo(cx - size, cy - size)<span></span>
+        ctx.lineTo(cx + size, cy - size)<span></span>
+    elif d == 3:  # 左<span></span>
+        ctx.moveTo(cx - size, cy)<span></span>
+        ctx.lineTo(cx + size, cy - size)<span></span>
+        ctx.lineTo(cx + size, cy + size)<span></span>
+    ctx.closePath()<span></span>
+    ctx.fill()<span></span>
+<span></span>
+@bind(document, "keydown")<span></span>
+def on_key(e):<span></span>
+    key = e.key.lower()<span></span>
+    if key == "i":<span></span>
+        robot["dir"] = (robot["dir"] - 1) % 4  # 左轉<span></span>
+    elif key == "j":<span></span>
+        dx, dy = directions[robot["dir"]]<span></span>
+        nx = robot["x"] + dx<span></span>
+        ny = robot["y"] + dy<span></span>
+        if 0 &lt;= nx &lt; cols and 0 &lt;= ny &lt; rows:<span></span>
+            robot["x"] = nx<span></span><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">
+            robot["y"] = ny</span></span><span></span><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">
+    繪製機器人()</span></span><span></span>
+<span></span><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">
+繪製機器人()</span></span></pre>
+<p><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">最佳化:</span></span></p>
+<p><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">題目：</span></span><br/><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">一位製造想設計一個開口式的盒子，其底部為長方形，寬為x、長為y，且總長度為80平方商分。請問要讓盒子的體積達到最大，又該採用哪些尺寸？</span></span></p>
+<p><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">直接利用Python以</span></span><a href="https://en.wikipedia.org/wiki/Differential_evolution"><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">Differential Evoluation</span></span></a><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">侵犯：  </span></span><a href="./../downloads/de_volume_max.py"><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">de_volume_max.py</span></span></a></p>
+<p style="padding-left: 30px;"><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">參考： </span></span></p>
+<p style="padding-left: 60px;"><a href="./../downloads/de_volume_max.c"><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">de_volume_max.c</span></span></a><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">、  </span></span><a href="./../downloads/de_volume_max.v"><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">de_volume_max.v</span></span></a></p>
+<p><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">也可以採用網頁前端使用 Brython，支架採用 Python 執行攻擊後將資料傳回網頁：  </span></span><a href="./../downloads/brython_w_flask.7z"><span dir="auto" style="vertical-align: inherit;"><span dir="auto" style="vertical-align: inherit;">brython_w_flask.7z</span></span></a></p>
+<br />Brython << <a href='Brython.html'>Previous</a> <a href='派奧迪德.html'>Next</a> >> 派奧迪德</div>
         
     <!-- footer -->
       <div class="container">
